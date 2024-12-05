@@ -24,7 +24,7 @@ const INSTRUCTION = `以下は、音声認識処理によって得られた発�
 
 export async function callLLM(userInput: string): Promise<string> {
     try {
-        const prompt = ChatPromptTemplate.fromMessages([{ role: "system", content: INSTRUCTION }]);
+        const prompt = ChatPromptTemplate.fromMessages([{ role: "user", content: INSTRUCTION }]);
         let llm;
         console.log(`OPENAI_API_KEY = ${env.OPENAI_API_KEY}`)
         console.log(`AZURE_API_KEY = ${env.AZURE_API_KEY}`)
@@ -67,7 +67,7 @@ export async function callLLM(userInput: string): Promise<string> {
         const parser = new StringOutputParser();
         const chain = prompt.pipe(llm).pipe(parser)
         const res = await chain.invoke({ input: userInput });
-        console.log(res)
+        console.log(`llm answer = `, res)
         // const res = await fetch("https://api.openai.com/v1/chat/completions", {
         //     method: "POST",
         //     headers: {

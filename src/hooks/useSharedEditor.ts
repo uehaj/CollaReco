@@ -22,17 +22,19 @@ import OrderedList from "@tiptap/extension-ordered-list";
 //const websocketUrl = publicRuntimeConfig.NEXT_PUBLIC_WEBSOCKET_URL; // Use publicRuntimeConfig
 
 const ydoc = new Y.Doc(); // Initialize Y.Doc for shared editing
-const websocketUrl = env.NEXT_PUBLIC_WEBSOCKET_URL ?? "ws://localhost:1234";
+const websocketUrl: string = env.NEXT_PUBLIC_WEBSOCKET_URL ?? "ws://localhost:1234";
+console.log(`websocketUrl=`, websocketUrl)
+if (websocketUrl !== 'http://no_websocket') {
+  const websocketProvider = new WebsocketProvider(
+    websocketUrl,
+    "CollaReco-demo",
+    ydoc,
+  );
 
-const websocketProvider = new WebsocketProvider(
-  websocketUrl,
-  "CollaReco-demo",
-  ydoc,
-);
-
-websocketProvider.on("status", (event: { status: string }) => {
-  console.log(event.status); // logs "connected" or "disconnected"
-});
+  websocketProvider.on("status", (event: { status: string }) => {
+    console.log(event.status); // logs "connected" or "disconnected"
+  });
+}
 
 export default function useSharedEditor() {
   const editor = useEditor({
