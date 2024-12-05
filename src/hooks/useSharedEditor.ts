@@ -6,6 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
+import { env } from "~/env";
 
 import BulletList from "@tiptap/extension-bullet-list";
 import Document from "@tiptap/extension-document";
@@ -14,12 +15,18 @@ import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import OrderedList from "@tiptap/extension-ordered-list";
 
+// 動的にホスト名からWebSocket URLを生成
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+//const { publicRuntimeConfig } = getConfig(); // Get publicRuntimeConfig from next/config
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+//const websocketUrl = publicRuntimeConfig.NEXT_PUBLIC_WEBSOCKET_URL; // Use publicRuntimeConfig
 
 const ydoc = new Y.Doc(); // Initialize Y.Doc for shared editing
+const websocketUrl = env.NEXT_PUBLIC_WEBSOCKET_URL ?? "ws://localhost:1234";
+
 const websocketProvider = new WebsocketProvider(
-  // "wss://demos.yjs.dev",
-  "ws://localhost:1234",
-  "yjs-demo",
+  websocketUrl,
+  "CollaReco-demo",
   ydoc,
 );
 
