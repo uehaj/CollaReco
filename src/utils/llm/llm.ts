@@ -9,7 +9,7 @@ import { env } from "~/env";
 
 
 import * as globalAgent from 'global-agent';
-process.env["GLOBAL_AGENT_HTTP_PROXY"] = process.env.HTTP_PROXY
+process.env.GLOBAL_AGENT_HTTP_PROXY = process.env.HTTP_PROXY
 globalAgent.bootstrap();
 
 
