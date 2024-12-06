@@ -7,6 +7,12 @@ import { StringOutputParser } from "@langchain/core/output_parsers";
 import getConfig from 'next/config';
 import { env } from "~/env";
 
+
+import * as globalAgent from 'global-agent';
+process.env["GLOBAL_AGENT_HTTP_PROXY"] = process.env.HTTP_PROXY
+globalAgent.bootstrap();
+
+
 const INSTRUCTION = `以下は、音声認識処理によって得られた発話ですが、
 フィラーや間投詞などで実際に書き言葉としては違和感のあるものになっています。
 また、同音異義語の認識誤りが含まれています。これを「読んで違和感が無いこと」を優先にして、
@@ -26,8 +32,6 @@ export async function callLLM(userInput: string): Promise<string> {
     try {
         const prompt = ChatPromptTemplate.fromMessages([{ role: "user", content: INSTRUCTION }]);
         let llm;
-        console.log(`OPENAI_API_KEY = ${env.OPENAI_API_KEY}`)
-        console.log(`AZURE_API_KEY = ${env.AZURE_API_KEY}`)
         if (env.OPENAI_API_KEY) {
             llm = new ChatOpenAI({
                 openAIApiKey: env.OPENAI_API_KEY,
