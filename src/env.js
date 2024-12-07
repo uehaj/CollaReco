@@ -11,6 +11,15 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+
+    OPENAI_API_KEY: z.string().optional(),
+    OPENAI_LLM_MODEL: z.string().optional(),
+
+    AZURE_API_KEY: z.string().optional(),
+    AZURE_API_BASE: z.string().url().optional(),
+    AZURE_API_VERSION: z.string().optional(),
+    AZURE_DEPLOYEMENT_NAME: z.string().optional(),
+    AZURE_LLM_MODEL: z.string().optional(),
   },
 
   /**
@@ -19,7 +28,7 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_WEBSOCKET_URL: z.string().url(),
   },
 
   /**
@@ -29,7 +38,17 @@ export const env = createEnv({
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
-    // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_LLM_MODEL: process.env.OPENAI_LLM_MODEL,
+
+    AZURE_API_KEY: process.env.AZURE_API_KEY,
+    AZURE_API_BASE: process.env.AZURE_API_BASE,
+    AZURE_API_VERSION: process.env.AZURE_API_VERSION,
+    AZURE_DEPLOYEMENT_NAME: process.env.AZURE_DEPLOYEMENT_NAME,
+    AZURE_LLM_MODEL: process.env.AZURE_LLM_MODEL,
+
+    NEXT_PUBLIC_WEBSOCKET_URL: process.env.NEXT_PUBLIC_WEBSOCKET_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

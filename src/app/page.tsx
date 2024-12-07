@@ -58,6 +58,7 @@ const App: React.FC = () => {
       for (const result of event.results) {
         if (result.isFinal) {
           const recognizedText = result?.[0]?.transcript;
+          console.log(`recognizedText = `, recognizedText);
           if (recognizedText) {
             console.log(
               "認識の最終結果がでました",
@@ -193,7 +194,7 @@ const App: React.FC = () => {
           borderBottom: "1px solid #ccc",
         }}
       >
-        <h1>協調作業による音声認識CollaReco(仮)</h1>
+        <h1>CollaReco(Collaborative Speech Recognition Tool)</h1>
         {error ? (
           <p style={{ color: "red" }}>{error}</p>
         ) : (

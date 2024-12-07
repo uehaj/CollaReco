@@ -9,6 +9,7 @@ export const postRouter = createTRPCRouter({
   add: publicProcedure
     .input(z.object({ text: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      console.log(`accepted text =`, input)
       const newPost = {
         text: input.text,
       };
