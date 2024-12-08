@@ -7,7 +7,11 @@ import { callLLMFromServer } from "~/utils/llm/llmFromServer";
 const posts: { text: string }[] = [];
 
 export const postRouter = createTRPCRouter({
-  config: publicProcedure.input(z.void()).query(() => { return { serverSideApiKeyEnabled: !!(env.OPENAI_API_KEY ?? env.AZURE_API_KEY) } }),
+  config: publicProcedure.input(z.void()).query(() => {
+    return {
+      serverSideApiKeyEnabled: !!(env.OPENAI_API_KEY ?? env.AZURE_API_KEY)
+    }
+  }),
   add: publicProcedure
     .input(z.object({ text: z.string(), callLLM: z.boolean() }))
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

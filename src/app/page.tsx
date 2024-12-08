@@ -43,8 +43,12 @@ const App: React.FC = () => {
     clientSideLLMCallEnabledAtom,
   );
 
-  const [{ serverSideApiKeyEnabled }] = api.post.config.useSuspenseQuery();
+  const output = api.post.config.useQuery();
+  const serverSideApiKeyEnabled = output.data?.serverSideApiKeyEnabled;
   const [, setShowModal] = useAtom(showModalAtom);
+
+  const [serverSideExplicitPassThrough, setServerSideExplicitPassThrough] =
+    useState(false);
 
   useEffect(() => {
     recording.current = false;
@@ -61,12 +65,12 @@ const App: React.FC = () => {
 
     const rec = new SpeechRecognition();
     rec.lang = "ja-JP";
-    rec.interimResults = true;
+    rec.interimResults = false;
     rec.continuous = false;
+    //rec.continuous = true;
     console.log(`======================`);
     console.log(`1====clientSideLLMCallEnabled=`, clientSideLLMCallEnabled);
-
-    rec.onresult = (event: SpeechRecognitionEvent) => {
+    const onResult = (event: SpeechRecognitionEvent) => {
       for (const result of event.results) {
         if (result.isFinal) {
           const recognizedText = result?.[0]?.transcript;
@@ -89,7 +93,8 @@ const App: React.FC = () => {
                   : recognizedText;
               const result = await addPost({
                 text: sendText,
-                callLLM: serverSideApiKeyEnabled,
+                callLLM:
+                  !!serverSideApiKeyEnabled && !serverSideExplicitPassThrough,
               });
               console.log(`====sendText=`, sendText);
               console.log(`====result.text=`, result.text);
@@ -97,7 +102,7 @@ const App: React.FC = () => {
               editor
                 ?.chain()
                 .focus("end", { scrollIntoView: true })
-                .insertContent(`<p>${result.text}</p>`)
+                .insertContent(`<li>${result.text}</li>`)
                 .run();
             })();
           }
@@ -108,6 +113,8 @@ const App: React.FC = () => {
         }
       }
     };
+    console.log(`1==== onResult=`, onResult);
+    rec.addEventListener("result", onResult);
 
     rec.onend = () => {
       if (recording.current) {
@@ -126,7 +133,7 @@ const App: React.FC = () => {
     rec.onspeechend = () => {
       console.log("Speech detection ended", JSON.stringify(recording.current));
     };
-
+    console.log(`setRecognition`, rec);
     setRecognition(rec);
 
     void navigator.mediaDevices.enumerateDevices().then((devices) => {
@@ -145,6 +152,8 @@ const App: React.FC = () => {
     return () => {
       console.log(`------------------- rec.stop()`);
       rec.stop();
+      rec.removeEventListener("result", onResult);
+      setRecognition(null);
     };
   }, [
     editor,
@@ -152,6 +161,7 @@ const App: React.FC = () => {
     serverSideApiKeyEnabled,
     clientSideLLMCallEnabled,
     clientSideApiKey,
+    serverSideExplicitPassThrough,
   ]);
 
   useEffect(() => {
@@ -202,6 +212,12 @@ const App: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setClientSideLLMCallEnabled(event.target.checked);
+  };
+
+  const handleServerSideExplicitPassThroughChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setServerSideExplicitPassThrough(event.target.checked);
   };
 
   return (
@@ -260,23 +276,40 @@ const App: React.FC = () => {
             >
               音声認識を区切る
             </button>
-            <span>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={clientSideLLMCallEnabled}
-                  onChange={handleLLMCallEnabledChange}
-                />
-                クライアント側からのLLM呼び出し
-              </label>
+            {!serverSideApiKeyEnabled && (
               <span>
-                {!serverSideApiKeyEnabled && clientSideLLMCallEnabled && (
-                  <button onClick={() => setShowModal(true)}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={clientSideLLMCallEnabled}
+                    onChange={handleLLMCallEnabledChange}
+                    disabled={recording.current}
+                  />
+                  クライアント側からのLLM呼び出し
+                </label>
+                {clientSideLLMCallEnabled && (
+                  <button
+                    onClick={() => setShowModal(true)}
+                    disabled={recording.current}
+                  >
                     ✎ Set API Key
                   </button>
                 )}
               </span>
-            </span>
+            )}
+            {serverSideApiKeyEnabled && (
+              <span>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={serverSideExplicitPassThrough}
+                    onChange={handleServerSideExplicitPassThroughChange}
+                    disabled={recording.current}
+                  />
+                  LLMパススルー
+                </label>
+              </span>
+            )}
           </>
         )}
       </div>
@@ -326,9 +359,10 @@ const App: React.FC = () => {
                   <h2>
                     {clientSideLLMCallEnabled && !!clientSideApiKey
                       ? "LLM変換結果(クライアント側でのLLM呼び出し)"
-                      : serverSideApiKeyEnabled
+                      : serverSideApiKeyEnabled &&
+                          !serverSideExplicitPassThrough
                         ? "LLM変換結果(サーバー側でのLLM呼び出し)"
-                        : "パススルー"}
+                        : "LLMパススルー"}
                     :
                   </h2>
                   <ul>

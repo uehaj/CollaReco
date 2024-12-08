@@ -22,7 +22,6 @@ import { env } from "~/env";
 
 const ydoc = new Y.Doc(); // Initialize Y.Doc for shared editing
 const websocketUrl: string = env.NEXT_PUBLIC_WEBSOCKET_URL ?? "ws://localhost:1234";
-console.log(`websocketUrl=`, websocketUrl)
 if (websocketUrl !== 'http://no_websocket') {
   const websocketProvider = new WebsocketProvider(
     websocketUrl,
