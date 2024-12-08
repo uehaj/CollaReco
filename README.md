@@ -1,29 +1,71 @@
-# Create T3 App
+# CollaReco
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+CollaRecoは協調型音声認識ツールです。現在PoC段階です。
+ツールの説明については[docs/index.md](docs/index.md)を参照ください。
 
-## What's next? How do I make an app with this?
+## 画面
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+![alt text](image.png)
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## 環境設定
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+### 必要なツール
 
-## Learn More
+- Node.js (推奨バージョン: 14.x 以上)
+- npm (Node.jsに含まれています)
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+### 環境変数の設定
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+1. `.env.example` ファイルをコピーして `.env` ファイルを作成します。
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+```sh
+cp [.env.example](http://_vscodecontentref_/1) .env
+```
 
-## How do I deploy this?
+2. .env ファイルに必要な環境変数を設定します。
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+### データベースの設定
+
+```sh
+npx prisma migrate dev
+```
+
+Prismaを使用してデータベースを設定します。
+
+起動手順
+依存関係のインストール
+プロジェクトの依存関係をインストールします。
+
+```sh
+npm install
+```
+
+### WebSocket サーバーの起動
+共同編集機能のために y-websocket サーバーを起動します。
+
+```
+npx y-websocket
+```
+
+開発サーバーの起動
+
+Next.js 開発サーバーを起動します。
+
+```
+npm run dev
+```
+
+ブラウザで http://localhost:3000 にアクセスしてアプリケーションを確認します。
+
+### 主な使用技術
+
+- T3 Stack(Create T3 App)
+  - Next.js (Next15 App Router)
+  - Prisma
+    - Sqlite
+  - Tailwind CSS
+  - tRPC
+    - trpc-to-openapi
+- TipTap
+  - ProseMirror
+    - Yjs

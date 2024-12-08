@@ -7,8 +7,11 @@ import { StringOutputParser } from "@langchain/core/output_parsers";
 import { env } from "~/env";
 
 import * as globalAgent from 'global-agent';
-process.env.GLOBAL_AGENT_HTTP_PROXY = process.env.HTTP_PROXY
-globalAgent.bootstrap();
+
+if (process.env.HTTP_PROXY) {
+    process.env.GLOBAL_AGENT_HTTP_PROXY = process.env.HTTP_PROXY
+    globalAgent.bootstrap();
+}
 
 const INSTRUCTION = `以下は、音声認識処理によって得られた発話ですが、
 フィラーや間投詞などで実際に書き言葉としては違和感のあるものになっています。
