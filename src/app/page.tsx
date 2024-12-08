@@ -6,7 +6,12 @@ import useSharedEditor from "~/hooks/useSharedEditor";
 import { api } from "~/trpc/react";
 import ModalComponent from "./_components/ModalComponent";
 import { useAtom } from "jotai";
-import { showModalAtom } from "~/utils/atoms";
+import {
+  clientSideApiKeyAtom,
+  showModalAtom,
+  clientSideLLMCallEnabledAtom,
+} from "~/utils/atoms";
+import { callLLMFromClient } from "~/utils/llm/llmFromClient";
 
 interface AudioDevice {
   deviceId: string;
@@ -31,7 +36,15 @@ const App: React.FC = () => {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("LLM変換結果");
-  const { mutateAsync } = api.post.add.useMutation();
+  const { mutateAsync: addPost } = api.post.add.useMutation();
+
+  const [clientSideApiKey] = useAtom(clientSideApiKeyAtom);
+  const [clientSideLLMCallEnabled, setClientSideLLMCallEnabled] = useAtom(
+    clientSideLLMCallEnabledAtom,
+  );
+
+  const [{ serverSideApiKeyEnabled }] = api.post.config.useSuspenseQuery();
+  const [, setShowModal] = useAtom(showModalAtom);
 
   useEffect(() => {
     recording.current = false;
@@ -50,6 +63,8 @@ const App: React.FC = () => {
     rec.lang = "ja-JP";
     rec.interimResults = true;
     rec.continuous = false;
+    console.log(`======================`);
+    console.log(`1====clientSideLLMCallEnabled=`, clientSideLLMCallEnabled);
 
     rec.onresult = (event: SpeechRecognitionEvent) => {
       for (const result of event.results) {
@@ -58,7 +73,26 @@ const App: React.FC = () => {
           if (recognizedText) {
             setTranscripts((prev) => [...prev, recognizedText]);
             void (async () => {
-              const result = await mutateAsync({ text: recognizedText });
+              console.log(
+                `====serverSideApiKeyEnabled=`,
+                serverSideApiKeyEnabled,
+              );
+              console.log(
+                `2====clientSideLLMCallEnabled=`,
+                clientSideLLMCallEnabled,
+              );
+
+              const sendText = serverSideApiKeyEnabled
+                ? recognizedText
+                : clientSideLLMCallEnabled
+                  ? await callLLMFromClient(recognizedText, clientSideApiKey)
+                  : recognizedText;
+              const result = await addPost({
+                text: sendText,
+                callLLM: serverSideApiKeyEnabled,
+              });
+              console.log(`====sendText=`, sendText);
+              console.log(`====result.text=`, result.text);
               setConvertedTranscripts((prev) => [...prev, result.text]);
               editor
                 ?.chain()
@@ -109,9 +143,16 @@ const App: React.FC = () => {
     });
 
     return () => {
+      console.log(`------------------- rec.stop()`);
       rec.stop();
     };
-  }, [editor, mutateAsync]);
+  }, [
+    editor,
+    addPost,
+    serverSideApiKeyEnabled,
+    clientSideLLMCallEnabled,
+    clientSideApiKey,
+  ]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -157,8 +198,11 @@ const App: React.FC = () => {
     setSelectedDevice(event.target.value);
   };
 
-  const [{ serverSideApiKeyEnabled }] = api.post.config.useSuspenseQuery();
-  const [, setShowModal] = useAtom(showModalAtom);
+  const handleLLMCallEnabledChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setClientSideLLMCallEnabled(event.target.checked);
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
@@ -217,9 +261,21 @@ const App: React.FC = () => {
               音声認識を区切る
             </button>
             <span>
-              {!serverSideApiKeyEnabled && (
-                <button onClick={() => setShowModal(true)}>✎Set API Key</button>
-              )}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={clientSideLLMCallEnabled}
+                  onChange={handleLLMCallEnabledChange}
+                />
+                クライアント側からのLLM呼び出し
+              </label>
+              <span>
+                {!serverSideApiKeyEnabled && clientSideLLMCallEnabled && (
+                  <button onClick={() => setShowModal(true)}>
+                    ✎ Set API Key
+                  </button>
+                )}
+              </span>
             </span>
           </>
         )}
@@ -267,7 +323,14 @@ const App: React.FC = () => {
             <div className="tab-content">
               {activeTab === "LLM変換結果" && (
                 <div>
-                  <h2>LLM変換:</h2>
+                  <h2>
+                    {clientSideLLMCallEnabled && !!clientSideApiKey
+                      ? "LLM変換結果(クライアント側でのLLM呼び出し)"
+                      : serverSideApiKeyEnabled
+                        ? "LLM変換結果(サーバー側でのLLM呼び出し)"
+                        : "パススルー"}
+                    :
+                  </h2>
                   <ul>
                     {convertedTranscripts.map((convertedTranscript, index) => (
                       <li key={index}>{convertedTranscript}</li>

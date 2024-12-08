@@ -1,9 +1,10 @@
-"server-only";
+import 'server-only';
 
 // import { ConversationChain } from "langchain/chains";
 import { ChatOpenAI, AzureChatOpenAI } from "@langchain/openai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
+import { DEFAULT_INSTRUCTION } from './prompt'
 import { env } from "~/env";
 
 import * as globalAgent from 'global-agent';
@@ -13,21 +14,10 @@ if (process.env.HTTP_PROXY) {
     globalAgent.bootstrap();
 }
 
-const INSTRUCTION = `以下は、音声認識処理によって得られた発話ですが、
-フィラーや間投詞などで実際に書き言葉としては違和感のあるものになっています。
-また、同音異義語の認識誤りが含まれています。これを「読んで違和感が無いこと」を優先にして、
-わかりやすいテキストに変換してください。ただし、前後の文脈であまりにも意味が通じないところは、
-無理に変更せず、そのままにして、ただし文末に「(?)」を付けてください。
-情報は一切追加しないでください。
+const INSTRUCTION = DEFAULT_INSTRUCTION;
 
-前置きや後書きは不要で、変換内容だけを答えてください。
-ユーザに質問しないでください。ツールや関数は使用しないでください。
-### 発話者による発話
-
-{input}
-`;
-
-export async function callLLM(userInput: string): Promise<string> {
+export async function callLLMFromServer(userInput: string): Promise<string> {
+    console.log(`callLLMFromServer(${userInput})`)
     try {
         const prompt = ChatPromptTemplate.fromMessages([{ role: "user", content: INSTRUCTION }]);
         let llm;
