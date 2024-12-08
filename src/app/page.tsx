@@ -5,6 +5,8 @@ import Tiptap from "./_components/Tiptap";
 import useSharedEditor from "~/hooks/useSharedEditor";
 import { api } from "~/trpc/react";
 import ModalComponent from "./_components/ModalComponent";
+import { useAtom } from "jotai";
+import { showModalAtom } from "~/utils/atoms";
 
 interface AudioDevice {
   deviceId: string;
@@ -14,7 +16,7 @@ interface AudioDevice {
 const App: React.FC = () => {
   const editor = useSharedEditor();
   const recording = useRef<boolean>(false);
-  const [recognizeCount, setRecognizeCount] = useState<number>(0);
+  const [, setRecognizeCount] = useState<number>(0);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(
     null,
   );
@@ -156,11 +158,10 @@ const App: React.FC = () => {
   };
 
   const [{ serverSideApiKeyEnabled }] = api.post.config.useSuspenseQuery();
-  const [showModal, setShowModal] = useState(true);
+  const [, setShowModal] = useAtom(showModalAtom);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      serverSideApiKeyEnabled={JSON.stringify(serverSideApiKeyEnabled)}
       <div
         style={{
           flex: "0 0 auto",
@@ -288,9 +289,7 @@ const App: React.FC = () => {
         <h2>途中経過:</h2>
         <p>{interimResult}</p>
       </div>
-      {!serverSideApiKeyEnabled && (
-        <ModalComponent showModal={showModal} setShowModal={setShowModal} />
-      )}
+      {!serverSideApiKeyEnabled && <ModalComponent />}
     </div>
   );
 };

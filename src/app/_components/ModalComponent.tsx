@@ -1,22 +1,27 @@
-import React, { useState } from "react";
+"use client";
 
-type Props = {
-  showModal: boolean;
-  setShowModal: (showModal: boolean) => void;
-};
-const ModalComponent = ({ showModal, setShowModal }: Props) => {
-  const [apiKeyClientSide, setApiKeyClientSide] = useState<string | undefined>(
-    undefined,
-  );
+import { useAtom } from "jotai";
+import React from "react";
+import { clientSideApiKeyAtom, showModalAtom } from "~/utils/atoms";
+
+const ModalComponent = () => {
+  const [clientSideApiKey, setClientSideApiKey] = useAtom(clientSideApiKeyAtom);
+  const [tmpApiKey, setTmpApiKey] = React.useState(clientSideApiKey);
+  const [showModal, setShowModal] = useAtom(showModalAtom);
 
   if (!showModal) return null;
 
   function handleSaveApiKey(event: React.MouseEvent<HTMLButtonElement>): void {
+    setClientSideApiKey(tmpApiKey);
     setShowModal(false);
   }
 
   function handleCloseModal(event: React.MouseEvent<HTMLButtonElement>): void {
     setShowModal(false);
+  }
+
+  function handleOnChange(event: React.ChangeEvent<HTMLInputElement>): void {
+    setTmpApiKey(event.target.value);
   }
 
   return (
@@ -25,8 +30,8 @@ const ModalComponent = ({ showModal, setShowModal }: Props) => {
         <h2>API Key</h2>
         <input
           type="text"
-          value={apiKeyClientSide}
-          onChange={(e) => setApiKeyClientSide?.(e.target.value)}
+          onChange={handleOnChange}
+          defaultValue={clientSideApiKey}
         />
         <button onClick={handleSaveApiKey}>Save</button>
         <button onClick={handleCloseModal}>Close</button>
