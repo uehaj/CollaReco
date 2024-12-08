@@ -1,20 +1,20 @@
 "use client";
 
-import React, { MouseEventHandler } from "react";
-import { type EditorOptions, Editor } from "@tiptap/core";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Collaboration from "@tiptap/extension-collaboration";
-import * as Y from "yjs";
-import { WebsocketProvider } from "y-websocket";
+import React, { type MouseEventHandler } from "react";
+import type { Editor } from "@tiptap/core";
+import { EditorContent } from "@tiptap/react";
+// import StarterKit from "@tiptap/starter-kit";
+// import Collaboration from "@tiptap/extension-collaboration";
+// import * as Y from "yjs";
+// import { WebsocketProvider } from "y-websocket";
 
-import BulletList from "@tiptap/extension-bullet-list";
-import Document from "@tiptap/extension-document";
-import ListItem from "@tiptap/extension-list-item";
-import Paragraph from "@tiptap/extension-paragraph";
-import Text from "@tiptap/extension-text";
-import OrderedList from "@tiptap/extension-ordered-list";
-import { twMerge } from "tailwind-merge";
+// import BulletList from "@tiptap/extension-bullet-list";
+// import Document from "@tiptap/extension-document";
+// import ListItem from "@tiptap/extension-list-item";
+// import Paragraph from "@tiptap/extension-paragraph";
+// import Text from "@tiptap/extension-text";
+// import OrderedList from "@tiptap/extension-ordered-list";
+// import { twMerge } from "tailwind-merge";
 
 // define your extension array
 // const extensions = [StarterKit];
@@ -23,10 +23,10 @@ type Props = {
   editor: Editor | null;
 };
 const Tiptap = ({ editor }: Props) => {
-  const handleClick: MouseEventHandler<HTMLButtonElement> = () => {
-    editor?.commands.focus("end", { scrollIntoView: true });
-    editor?.commands.insertContent("<br/>hoge");
-  };
+  // const handleClick: MouseEventHandler<HTMLButtonElement> = () => {
+  //   editor?.commands.focus("end", { scrollIntoView: true });
+  //   editor?.commands.insertContent("<br/>hoge");
+  // };
 
   return (
     <>

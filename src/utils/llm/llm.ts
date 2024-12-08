@@ -1,17 +1,14 @@
 "server-only";
 
-import { ConversationChain } from "langchain/chains";
+// import { ConversationChain } from "langchain/chains";
 import { ChatOpenAI, AzureChatOpenAI } from "@langchain/openai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
-import getConfig from 'next/config';
 import { env } from "~/env";
-
 
 import * as globalAgent from 'global-agent';
 process.env.GLOBAL_AGENT_HTTP_PROXY = process.env.HTTP_PROXY
 globalAgent.bootstrap();
-
 
 const INSTRUCTION = `以下は、音声認識処理によって得られた発話ですが、
 フィラーや間投詞などで実際に書き言葉としては違和感のあるものになっています。
@@ -23,7 +20,6 @@ const INSTRUCTION = `以下は、音声認識処理によって得られた発�
 前置きや後書きは不要で、変換内容だけを答えてください。
 ユーザに質問しないでください。ツールや関数は使用しないでください。
 ### 発話者による発話
-
 
 {input}
 `;

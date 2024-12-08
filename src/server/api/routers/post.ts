@@ -8,6 +8,7 @@ const posts: { text: string }[] = [];
 export const postRouter = createTRPCRouter({
   add: publicProcedure
     .input(z.object({ text: z.string() }))
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     .mutation(async ({ ctx, input }) => {
       console.log(`accepted text =`, input)
       const newPost = {

@@ -1,19 +1,18 @@
 "use client";
 
-import React, { MouseEventHandler } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { env } from "~/env";
 
-import BulletList from "@tiptap/extension-bullet-list";
-import Document from "@tiptap/extension-document";
-import ListItem from "@tiptap/extension-list-item";
-import Paragraph from "@tiptap/extension-paragraph";
-import Text from "@tiptap/extension-text";
-import OrderedList from "@tiptap/extension-ordered-list";
+// import BulletList from "@tiptap/extension-bullet-list";
+// import Document from "@tiptap/extension-document";
+// import ListItem from "@tiptap/extension-list-item";
+// import Paragraph from "@tiptap/extension-paragraph";
+// import Text from "@tiptap/extension-text";
+// import OrderedList from "@tiptap/extension-ordered-list";
 
 // 動的にホスト名からWebSocket URLを生成
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

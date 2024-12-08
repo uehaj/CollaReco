@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, MouseEventHandler } from "react";
+import React, { useEffect, useState, useRef } from "react";
 // import { callLLM } from "~/utils/llm/llm";
 import Tiptap from "./_components/Tiptap";
 import useSharedEditor from "~/hooks/useSharedEditor";
@@ -19,6 +19,7 @@ const App: React.FC = () => {
   useEffect(() => {
     recording.current = false;
   }, []);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [recognizeCount, setRecognizeCount] = useState<number>(0);
 
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(
@@ -34,7 +35,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState("LLM変換");
+  const [activeTab, setActiveTab] = useState("LLM変換結果");
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const { mutateAsync } = api.post.add.useMutation();
@@ -129,7 +130,7 @@ const App: React.FC = () => {
     return () => {
       rec.stop();
     };
-  }, [editor]);
+  }, [editor, mutateAsync]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -277,10 +278,10 @@ const App: React.FC = () => {
           <div>
             <div className="tabs">
               <button
-                onClick={() => setActiveTab("LLM変換")}
-                disabled={activeTab === "LLM変換"}
+                onClick={() => setActiveTab("LLM変換結果")}
+                disabled={activeTab === "LLM変換結果"}
               >
-                LLM変換
+                LLM変換結果
               </button>
               <button
                 onClick={() => setActiveTab("編集")}
@@ -290,7 +291,7 @@ const App: React.FC = () => {
               </button>
             </div>
             <div className="tab-content">
-              {activeTab === "LLM変換" && (
+              {activeTab === "LLM変換結果" && (
                 <div>
                   <h2>LLM変換:</h2>
                   <ul>
