@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-// import { callLLM } from "~/utils/llm/llm";
 import Tiptap from "./_components/Tiptap";
 import useSharedEditor from "~/hooks/useSharedEditor";
 import { api } from "~/trpc/react";
-// import { callLLM } from "~/util/llm";
+import ModalComponent from "./_components/ModalComponent";
 
 interface AudioDevice {
   deviceId: string;
@@ -14,14 +13,8 @@ interface AudioDevice {
 
 const App: React.FC = () => {
   const editor = useSharedEditor();
-  // const [recording, setRecording] = useState(false);
   const recording = useRef<boolean>(false);
-  useEffect(() => {
-    recording.current = false;
-  }, []);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [recognizeCount, setRecognizeCount] = useState<number>(0);
-
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(
     null,
   );
@@ -36,12 +29,13 @@ const App: React.FC = () => {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("LLM変換結果");
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const { mutateAsync } = api.post.add.useMutation();
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    recording.current = false;
+  }, []);
+
+  useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -59,19 +53,10 @@ const App: React.FC = () => {
       for (const result of event.results) {
         if (result.isFinal) {
           const recognizedText = result?.[0]?.transcript;
-          console.log(`recognizedText = `, recognizedText);
           if (recognizedText) {
-            console.log(
-              "認識の最終結果がでました",
-              JSON.stringify(recording.current),
-            );
             setTranscripts((prev) => [...prev, recognizedText]);
             void (async () => {
-              // const convertedText = await callLLM(recognizedText);
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
               const result = await mutateAsync({ text: recognizedText });
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return
               setConvertedTranscripts((prev) => [...prev, result.text]);
               editor
                 ?.chain()
@@ -82,10 +67,6 @@ const App: React.FC = () => {
           }
         } else {
           if (result?.[0]?.transcript) {
-            console.log(
-              "認識の中間結果がでました",
-              JSON.stringify(recording.current),
-            );
             setIntrimResult(result?.[0]?.transcript);
           }
         }
@@ -93,9 +74,7 @@ const App: React.FC = () => {
     };
 
     rec.onend = () => {
-      console.log("認識が終了しました。", JSON.stringify(recording.current));
       if (recording.current) {
-        console.log("認識を再起動します...", JSON.stringify(recording.current));
         rec.start(); // 自動再起動
       }
     };
@@ -149,10 +128,6 @@ const App: React.FC = () => {
         .then(() => {
           recognition.start();
           recording.current = true;
-          console.log(
-            "音声認識を開始しました。",
-            JSON.stringify(recording.current),
-          );
           setRecognizeCount((prevValue) => prevValue + 1);
         })
         .catch((err) => {
@@ -161,33 +136,31 @@ const App: React.FC = () => {
         });
     }
   };
+
   const handleStop = () => {
     if (recognition) {
       recognition.stop();
-      console.log(
-        "音声認識を区切りました。",
-        JSON.stringify(recording.current),
-      );
     }
   };
+
   const handleAbort = () => {
     if (recognition) {
       recognition.abort();
-      console.log(
-        "音声認識を中止しました。",
-        JSON.stringify(recording.current),
-      );
       recording.current = false;
       setRecognizeCount((prevValue) => prevValue + 1);
     }
   };
+
   const handleDeviceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedDevice(event.target.value);
   };
 
+  const [{ serverSideApiKeyEnabled }] = api.post.config.useSuspenseQuery();
+  const [showModal, setShowModal] = useState(true);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      {/* 設定エリア */}
+      serverSideApiKeyEnabled={JSON.stringify(serverSideApiKeyEnabled)}
       <div
         style={{
           flex: "0 0 auto",
@@ -242,13 +215,15 @@ const App: React.FC = () => {
             >
               音声認識を区切る
             </button>
+            <span>
+              {!serverSideApiKeyEnabled && (
+                <button onClick={() => setShowModal(true)}>✎Set API Key</button>
+              )}
+            </span>
           </>
         )}
       </div>
-
-      {/* 認識履歴エリア */}
       <div style={{ flex: "1 1 auto", display: "flex", overflow: "hidden" }}>
-        {/* 左側: 認識履歴 */}
         <div
           style={{
             flex: "1 1 50%",
@@ -265,8 +240,6 @@ const App: React.FC = () => {
             ))}
           </ul>
         </div>
-
-        {/* 右側: LLM変換結果 */}
         <div
           style={{
             flex: "1 1 50%",
@@ -311,12 +284,13 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* 途中経過エリア */}
       <div style={{ flex: "0 0 auto", padding: "10px" }}>
         <h2>途中経過:</h2>
         <p>{interimResult}</p>
       </div>
+      {!serverSideApiKeyEnabled && (
+        <ModalComponent showModal={showModal} setShowModal={setShowModal} />
+      )}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { env } from "~/env";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { callLLM } from "~/utils/llm/llm";
@@ -6,6 +7,7 @@ import { callLLM } from "~/utils/llm/llm";
 const posts: { text: string }[] = [];
 
 export const postRouter = createTRPCRouter({
+  config: publicProcedure.input(z.void()).query(() => { return { serverSideApiKeyEnabled: !!(env.OPENAI_API_KEY ?? env.AZURE_API_KEY) } }),
   add: publicProcedure
     .input(z.object({ text: z.string() }))
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
