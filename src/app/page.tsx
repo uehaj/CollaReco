@@ -74,6 +74,7 @@ const App: React.FC = () => {
       for (const result of event.results) {
         if (result.isFinal) {
           const recognizedText = result?.[0]?.transcript;
+          console.log(`recognizedText = `, recognizedText);
           if (recognizedText) {
             setTranscripts((prev) => [...prev, recognizedText]);
             void (async () => {

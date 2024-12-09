@@ -28,7 +28,6 @@ if (websocketUrl !== 'http://no_websocket') {
     "CollaReco-demo",
     ydoc,
   );
-
   websocketProvider.on("status", (event: { status: string }) => {
     console.log(event.status); // logs "connected" or "disconnected"
   });
