@@ -5,7 +5,7 @@ CollaRecoは協調型音声認識ツールです。現在PoC段階です。
 
 ## 画面
 
-![alt text](image.png)
+![alt text](docs/images/image-2.png)
 
 ## 環境設定
 
@@ -91,7 +91,7 @@ Chromeブラウザで http://localhost:3000 にアクセスしてアプリケー
 
 「音声認識」ボタンを押下することで文字起こしが開始します。
 
-![alt text](image-1.png)
+![alt text](docs/images/image-1.png)
 
 ### 主な使用技術
 
