@@ -66,7 +66,7 @@ const App: React.FC = () => {
     const rec = new SpeechRecognition();
     rec.lang = "ja-JP";
     rec.interimResults = true;
-    rec.continuous = true;
+    rec.continuous = false;
     // rec.continuous = true;
     console.log(`1====clientSideLLMCallEnabled=`, clientSideLLMCallEnabled);
     const onResult = (event: SpeechRecognitionEvent) => {
