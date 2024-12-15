@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import Tiptap from "./_components/Tiptap";
+import Tiptap from "~/app/_components/Tiptap";
 import useSharedEditor from "~/hooks/useSharedEditor";
 import { api } from "~/trpc/react";
-import ModalComponent from "./_components/ModalComponent";
+import ModalComponent from "~/app/_components/ModalComponent";
 import { useAtom } from "jotai";
 import {
   clientSideApiKeyAtom,
@@ -35,7 +35,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState("LLM変換結果");
+  const [activeTab, setActiveTab] = useState("編集" /*"LLM変換結果"*/);
   const { mutateAsync: addPost } = api.post.add.useMutation();
 
   const [clientSideApiKey] = useAtom(clientSideApiKeyAtom);
@@ -65,10 +65,9 @@ const App: React.FC = () => {
 
     const rec = new SpeechRecognition();
     rec.lang = "ja-JP";
-    rec.interimResults = false;
+    rec.interimResults = true;
     rec.continuous = false;
-    //rec.continuous = true;
-    console.log(`======================`);
+    // rec.continuous = true;
     console.log(`1====clientSideLLMCallEnabled=`, clientSideLLMCallEnabled);
     const onResult = (event: SpeechRecognitionEvent) => {
       for (const result of event.results) {
@@ -78,15 +77,6 @@ const App: React.FC = () => {
           if (recognizedText) {
             setTranscripts((prev) => [...prev, recognizedText]);
             void (async () => {
-              console.log(
-                `====serverSideApiKeyEnabled=`,
-                serverSideApiKeyEnabled,
-              );
-              console.log(
-                `2====clientSideLLMCallEnabled=`,
-                clientSideLLMCallEnabled,
-              );
-
               const sendText = serverSideApiKeyEnabled
                 ? recognizedText
                 : clientSideLLMCallEnabled
@@ -221,172 +211,158 @@ const App: React.FC = () => {
     setServerSideExplicitPassThrough(event.target.checked);
   };
 
+  function llmMode() {
+    return clientSideLLMCallEnabled && !!clientSideApiKey
+      ? "LLM変換結果(クライアント側でのLLM呼び出し)"
+      : serverSideApiKeyEnabled && !serverSideExplicitPassThrough
+        ? "LLM変換結果(サーバー側でのLLM呼び出し)"
+        : "LLMパススルー";
+  }
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <div
-        style={{
-          flex: "0 0 auto",
-          padding: "10px",
-          borderBottom: "1px solid #ccc",
-        }}
-      >
-        <h1>CollaReco(Collaborative Speech Recognition Tool)</h1>
-        {error ? (
-          <p style={{ color: "red" }}>{error}</p>
-        ) : (
-          <>
+    <div className="prose prose-slate flex h-screen max-w-none flex-col">
+      <header className="bg-gray-200 p-4">
+        <div>
+          <div className="flex items-baseline justify-start">
+            <h1 className="mb-1 text-slate-800">CollaReco</h1>
+            <span className="ml-4 text-lg text-slate-500">
+              Collaborative Speech Recognition Tool
+            </span>
+          </div>
+          {error && <p className="text-red-700">{error}</p>}
+          <div className="rounded-lg bg-slate-300 p-2">
             <div>
-              <label htmlFor="device-select">音声入力デバイス:</label>
-              <select
-                id="device-select"
-                value={selectedDevice}
-                onChange={handleDeviceChange}
-              >
-                {deviceList.map((device) => (
-                  <option key={device.deviceId} value={device.deviceId}>
-                    {device.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <>
-              {recording.current ? (
-                <span style={{ color: "red" }}>●</span>
-              ) : (
-                <span>■</span>
-              )}
-            </>
-            <button
-              onClick={handleStart}
-              disabled={recording.current}
-              style={{ margin: "10px" }}
-            >
-              音声認識を開始
-            </button>
-            <button
-              onClick={handleAbort}
-              disabled={!recording.current}
-              style={{ margin: "10px" }}
-            >
-              音声認識を中止
-            </button>
-            <button
-              onClick={handleStop}
-              disabled={!recording.current}
-              style={{ margin: "10px" }}
-            >
-              音声認識を区切る
-            </button>
-            {!serverSideApiKeyEnabled && (
-              <span>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={clientSideLLMCallEnabled}
-                    onChange={handleLLMCallEnabledChange}
-                    disabled={recording.current}
-                  />
-                  クライアント側からのLLM呼び出し
-                </label>
-                {clientSideLLMCallEnabled && (
-                  <button
-                    onClick={() => setShowModal(true)}
-                    disabled={recording.current}
+              <span className="label">
+                <label htmlFor="device-select" className="label-text">
+                  <h3 className="mr-2 mt-0 inline-block">音声入力デバイス: </h3>
+                  <select
+                    className="select select-bordered"
+                    id="device-select"
+                    value={selectedDevice}
+                    onChange={handleDeviceChange}
                   >
-                    ✎ Set API Key
-                  </button>
-                )}
-              </span>
-            )}
-            {serverSideApiKeyEnabled && (
-              <span>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={serverSideExplicitPassThrough}
-                    onChange={handleServerSideExplicitPassThroughChange}
-                    disabled={recording.current}
-                  />
-                  LLMパススルー
+                    {deviceList.map((device) => (
+                      <option key={device.deviceId} value={device.deviceId}>
+                        {device.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </span>
-            )}
-          </>
-        )}
+            </div>
+            <div className="mb-2">
+              {recording.current ? (
+                <span className="p-4 text-red-700">●</span>
+              ) : (
+                <span className="p-4">■</span>
+              )}
+              <button
+                className="btn btn-outline btn-sm mr-2"
+                onClick={handleStart}
+                disabled={recording.current}
+              >
+                音声認識を開始
+              </button>
+              <button
+                className="btn btn-outline btn-sm mr-2"
+                onClick={handleAbort}
+                disabled={!recording.current}
+              >
+                音声認識を中止
+              </button>
+              <button
+                className="btn btn-outline btn-sm mr-2"
+                onClick={handleStop}
+                disabled={!recording.current}
+              >
+                音声認識を区切る
+              </button>
+
+              <>
+                {!serverSideApiKeyEnabled && (
+                  <span>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={clientSideLLMCallEnabled}
+                        onChange={handleLLMCallEnabledChange}
+                        disabled={recording.current}
+                      />
+                      クライアント側からのLLM呼び出し
+                    </label>
+                    {clientSideLLMCallEnabled && (
+                      <button
+                        onClick={() => setShowModal(true)}
+                        disabled={recording.current}
+                      >
+                        ✎ Set API Key
+                      </button>
+                    )}
+                  </span>
+                )}
+              </>
+              {serverSideApiKeyEnabled && (
+                <span>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={serverSideExplicitPassThrough}
+                      onChange={handleServerSideExplicitPassThroughChange}
+                      disabled={recording.current}
+                    />
+                    LLMパススルー
+                  </label>
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex w-full">
+        <div className="flex w-1/2 justify-center align-bottom">
+          <div className="font-bold">認識履歴(Web Speech Recognition API)</div>
+        </div>
+        <div className="mr-4 flex w-1/2 space-x-2 border-l-2 border-gray-200 p-2">
+          <button
+            className={`${activeTab === "LLM変換結果" ? "border-2 border-teal-500" : "border-transparent"} btn w-1/2`}
+            onClick={() => setActiveTab("LLM変換結果")}
+          >
+            {llmMode()}
+          </button>
+          <button
+            className={`${activeTab === "編集" ? "border-2 border-teal-500" : "border-transparent hover:border-gray-200"} btn w-1/2`}
+            onClick={() => setActiveTab("編集")}
+          >
+            編集
+          </button>
+        </div>
       </div>
-      <div style={{ flex: "1 1 auto", display: "flex", overflow: "hidden" }}>
-        <div
-          style={{
-            flex: "1 1 50%",
-            overflowY: "auto",
-            padding: "10px",
-            borderRight: "1px solid #ccc",
-          }}
-          ref={scrollRef}
-        >
-          <h2>認識履歴:</h2>
+      <div className="flex flex-col"></div>
+
+      <div className="flex flex-1 overflow-hidden">
+        <div className="w-1/2 overflow-auto">
           <ul>
             {transcripts.map((transcript, index) => (
               <li key={index}>{transcript}</li>
             ))}
           </ul>
         </div>
-        <div
-          style={{
-            flex: "1 1 50%",
-            overflowY: "auto",
-            padding: "10px",
-            backgroundColor: activeTab === "編集" ? "#ffefef" : "white",
-          }}
-        >
-          <div>
-            <div className="tabs">
-              <button
-                onClick={() => setActiveTab("LLM変換結果")}
-                disabled={activeTab === "LLM変換結果"}
-              >
-                LLM変換結果
-              </button>
-              <button
-                onClick={() => setActiveTab("編集")}
-                disabled={activeTab === "編集"}
-              >
-                共同編集
-              </button>
-            </div>
-            <div className="tab-content">
-              {activeTab === "LLM変換結果" && (
-                <div>
-                  <h2>
-                    {clientSideLLMCallEnabled && !!clientSideApiKey
-                      ? "LLM変換結果(クライアント側でのLLM呼び出し)"
-                      : serverSideApiKeyEnabled &&
-                          !serverSideExplicitPassThrough
-                        ? "LLM変換結果(サーバー側でのLLM呼び出し)"
-                        : "LLMパススルー"}
-                    :
-                  </h2>
-                  <ul>
-                    {convertedTranscripts.map((convertedTranscript, index) => (
-                      <li key={index}>{convertedTranscript}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {activeTab === "編集" && (
-                <div>
-                  <h2>編集:</h2>
-                  <Tiptap editor={editor} />
-                </div>
-              )}
-            </div>
-          </div>
+
+        <div className="w-1/2 overflow-auto border-l-2 border-gray-200">
+          {activeTab === "LLM変換結果" && (
+            <ul>
+              {convertedTranscripts.map((convertedTranscript, index) => (
+                <li key={index}>{convertedTranscript}</li>
+              ))}
+            </ul>
+          )}
+          {activeTab === "編集" && <Tiptap editor={editor} />}
         </div>
       </div>
-      <div style={{ flex: "0 0 auto", padding: "10px" }}>
-        <h2>途中経過:</h2>
+      <footer className="bg-gray-200 p-4">
+        <h2 className="mb-1 mt-1">途中経過:</h2>
         <p>{interimResult}</p>
-      </div>
+      </footer>
       {!serverSideApiKeyEnabled && <ModalComponent />}
     </div>
   );

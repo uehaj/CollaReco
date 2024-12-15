@@ -13,6 +13,10 @@ import { env } from "~/env";
 // import Paragraph from "@tiptap/extension-paragraph";
 // import Text from "@tiptap/extension-text";
 // import OrderedList from "@tiptap/extension-ordered-list";
+import Heading from "@tiptap/extension-heading";
+import ListItem from "@tiptap/extension-list-item";
+import BulletList from "@tiptap/extension-bullet-list";
+import OrderedList from "@tiptap/extension-ordered-list";
 
 // 動的にホスト名からWebSocket URLを生成
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -35,18 +39,36 @@ if (websocketUrl !== 'http://no_websocket') {
 
 export default function useSharedEditor() {
   const editor = useEditor({
-    // TODO: uset sthema and setup for List edit
+    // TODO: unset schema and setup for List edit
     // https://tiptap.dev/docs/editor/extensions/nodes/list-item
+    // tailwind setting: https://dev.to/theresa_okoro/how-to-use-tiptap-rich-text-editor-with-nextjs-and-tailwind-css-a-simple-guide-18c2
     extensions: [
       Collaboration.configure({
         document: ydoc, // Configure Y.Doc for collaboration
       }),
       StarterKit,
+      // Heading.configure({
+      //   HTMLAttributes: {
+      //     class: "text-xl font-bold capitalize",
+      //     levels: [2],
+      //   },
+      // }),
+      // ListItem,
+      // BulletList.configure({
+      //   HTMLAttributes: {
+      //     class: "list-disc ml-2",
+      //   },
+      // }),
+      // OrderedList.configure({
+      //   HTMLAttributes: {
+      //     class: "list-decimal ml-2",
+      //   },
+      // }),
     ],
     immediatelyRender: false,
     autofocus: "end",
     content: `
-<h4>start recognition</h4>
+<h4>Start Recognition</h4>
   `,
   });
 

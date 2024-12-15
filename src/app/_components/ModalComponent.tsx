@@ -25,16 +25,36 @@ const ModalComponent = () => {
   }
 
   return (
-    <dialog open={showModal}>
-      <div className="modal-content">
-        <h2>API Key</h2>
+    <dialog open={showModal} className="modal">
+      <div className="modal-box w-11/12 max-w-5xl bg-slate-200">
+        <form method="dialog">
+          {/* if there is a button in form, it will close the modal */}
+          <button className="btn btn-circle btn-ghost btn-sm absolute right-2 top-2">
+            ✕
+          </button>
+        </form>
+        <h3 className="text-lg font-bold">API Key</h3>
+        <p className="py-4">OpenAI API Key</p>
         <input
+          className="max-w-ws input w-full bg-white"
           type="text"
           onChange={handleOnChange}
           defaultValue={clientSideApiKey}
         />
-        <button onClick={handleSaveApiKey}>Save</button>
-        <button onClick={handleCloseModal}>Close</button>
+        <div className="modal-action">
+          <button
+            className="btn btn-outline btn-sm mr-2"
+            onClick={handleSaveApiKey}
+          >
+            Save
+          </button>
+          <button
+            className="btn btn-outline btn-sm mr-2"
+            onClick={handleCloseModal}
+          >
+            Close
+          </button>
+        </div>
       </div>
     </dialog>
   );
