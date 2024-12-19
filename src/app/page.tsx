@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, RefObject } from "react";
 import Tiptap from "~/app/_components/Tiptap";
 import useSharedEditor from "~/hooks/useSharedEditor";
 import { api } from "~/trpc/react";
@@ -8,7 +8,6 @@ import ModalComponent from "~/app/_components/ModalComponent";
 import { useAtom } from "jotai";
 import {
   clientSideApiKeyAtom,
-  showModalAtom,
   clientSideLLMCallEnabledAtom,
 } from "~/utils/atoms";
 import { callLLMFromClient } from "~/utils/llm/llmFromClient";
@@ -45,7 +44,6 @@ const App: React.FC = () => {
 
   const output = api.post.config.useQuery();
   const serverSideApiKeyEnabled = output.data?.serverSideApiKeyEnabled;
-  const [, setShowModal] = useAtom(showModalAtom);
 
   const [serverSideExplicitPassThrough, setServerSideExplicitPassThrough] =
     useState(false);
@@ -165,7 +163,7 @@ const App: React.FC = () => {
     }
   }, [transcripts]);
 
-  const dialogRef = useRef<HTMLDialogElement>();
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
 
   const handleStart = () => {
     if (recognition) {
@@ -226,7 +224,11 @@ const App: React.FC = () => {
   }
 
   function handleShowDaialog() {
-    dialogRef.current?.showModal();
+    console.log(`dialogRef.current`, dialogRef.current);
+    if (dialogRef.current) {
+      console.log(`handleShowDaialog`);
+      dialogRef.current.showModal();
+    }
   }
 
   return (

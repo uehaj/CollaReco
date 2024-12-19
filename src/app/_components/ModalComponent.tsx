@@ -2,24 +2,27 @@
 
 import { useAtom } from "jotai";
 import React from "react";
-import { clientSideApiKeyAtom, showModalAtom } from "~/utils/atoms";
+import { clientSideApiKeyAtom } from "~/utils/atoms";
 type Props = {
-  ref: React.RefObject<HTMLDialogElement | undefined>;
+  ref: React.RefObject<HTMLDialogElement | null>;
 };
 const ModalComponent = ({ ref }: Props) => {
+  console.log(`object ModalComponent`);
   const [clientSideApiKey, setClientSideApiKey] = useAtom(clientSideApiKeyAtom);
   const [tmpApiKey, setTmpApiKey] = React.useState(clientSideApiKey);
-  const [showModal, setShowModal] = useAtom(showModalAtom);
+  // const [showModal, setShowModal] = useAtom(showModalAtom);
 
-  if (!showModal) return null;
+  // if (!showModal) return null;
 
   function handleSaveApiKey(event: React.MouseEvent<HTMLButtonElement>): void {
     setClientSideApiKey(tmpApiKey);
-    setShowModal(false);
+    // setShowModal(false);
+    ref.current?.close();
   }
 
   function handleCloseModal(event: React.MouseEvent<HTMLButtonElement>): void {
-    setShowModal(false);
+    // setShowModal(false);
+    ref.current?.close();
   }
 
   function handleOnChange(event: React.ChangeEvent<HTMLInputElement>): void {
@@ -27,7 +30,7 @@ const ModalComponent = ({ ref }: Props) => {
   }
 
   return (
-    <dialog open={showModal} className="modal" ref={ref}>
+    <dialog className="modal" ref={ref}>
       <div className="modal-box w-11/12 max-w-5xl bg-slate-200">
         <form method="dialog">
           {/* if there is a button in form, it will close the modal */}
