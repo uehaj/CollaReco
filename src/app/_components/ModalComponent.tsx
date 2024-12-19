@@ -3,8 +3,10 @@
 import { useAtom } from "jotai";
 import React from "react";
 import { clientSideApiKeyAtom, showModalAtom } from "~/utils/atoms";
-
-const ModalComponent = () => {
+type Props = {
+  ref: React.RefObject<HTMLDialogElement | undefined>;
+};
+const ModalComponent = ({ ref }: Props) => {
   const [clientSideApiKey, setClientSideApiKey] = useAtom(clientSideApiKeyAtom);
   const [tmpApiKey, setTmpApiKey] = React.useState(clientSideApiKey);
   const [showModal, setShowModal] = useAtom(showModalAtom);
@@ -25,7 +27,7 @@ const ModalComponent = () => {
   }
 
   return (
-    <dialog open={showModal} className="modal">
+    <dialog open={showModal} className="modal" ref={ref}>
       <div className="modal-box w-11/12 max-w-5xl bg-slate-200">
         <form method="dialog">
           {/* if there is a button in form, it will close the modal */}

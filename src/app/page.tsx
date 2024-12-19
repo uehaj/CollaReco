@@ -115,6 +115,10 @@ const App: React.FC = () => {
 
     rec.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.log("認識エラー:", event.error);
+      if (event.error === "no-speech") {
+        console.log("no-speech and restart");
+        rec.stop();
+      }
     };
 
     rec.onspeechstart = () => {
@@ -160,6 +164,8 @@ const App: React.FC = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [transcripts]);
+
+  const dialogRef = useRef<HTMLDialogElement>();
 
   const handleStart = () => {
     if (recognition) {
@@ -218,6 +224,11 @@ const App: React.FC = () => {
         ? "LLM変換結果(サーバー側でのLLM呼び出し)"
         : "LLMパススルー";
   }
+
+  function handleShowDaialog() {
+    dialogRef.current?.showModal();
+  }
+
   return (
     <div className="prose prose-slate flex h-screen max-w-none flex-col">
       <header className="bg-gray-200 p-4">
@@ -291,7 +302,7 @@ const App: React.FC = () => {
                     </label>
                     {clientSideLLMCallEnabled && (
                       <button
-                        onClick={() => setShowModal(true)}
+                        onClick={handleShowDaialog}
                         disabled={recording.current}
                       >
                         ✎ Set API Key
@@ -319,7 +330,7 @@ const App: React.FC = () => {
       </header>
 
       <div className="flex w-full">
-        <div className="flex w-1/2 justify-center align-bottom">
+        <div className="ml-4 flex w-1/2 justify-center align-bottom">
           <div className="font-bold">認識履歴(Web Speech Recognition API)</div>
         </div>
         <div className="mr-4 flex w-1/2 space-x-2 border-l-2 border-gray-200 p-2">
@@ -363,7 +374,7 @@ const App: React.FC = () => {
         <h2 className="mb-1 mt-1">途中経過:</h2>
         <p>{interimResult}</p>
       </footer>
-      {!serverSideApiKeyEnabled && <ModalComponent />}
+      {!serverSideApiKeyEnabled && <ModalComponent ref={dialogRef} />}
     </div>
   );
 };
