@@ -11,6 +11,7 @@ import {
   clientSideLLMCallEnabledAtom,
 } from "~/utils/atoms";
 import { callLLMFromClient } from "~/utils/llm/llmFromClient";
+import SessionList from "~/app/_components/SessionList";
 
 interface AudioDevice {
   deviceId: string;
@@ -32,6 +33,14 @@ const App: React.FC = () => {
   const [deviceList, setDeviceList] = useState<AudioDevice[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [sessionList, setSessionList] = useState<string[]>([
+    "Session 1",
+    "Session 2",
+    "Session 3",
+  ]);
+  const [selectedSession, setSelectedSession] = useState<string>(
+    sessionList[0] ?? "",
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("編集" /*"LLM変換結果"*/);
@@ -203,6 +212,10 @@ const App: React.FC = () => {
     setSelectedDevice(event.target.value);
   };
 
+  const handleSessionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedSession(event.target.value);
+  };
+
   const handleLLMCallEnabledChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -330,6 +343,12 @@ const App: React.FC = () => {
           </div>
         </div>
       </header>
+
+      <SessionList
+        sessionList={sessionList}
+        selectedSession={selectedSession}
+        onSessionChange={handleSessionChange}
+      />
 
       <div className="flex w-full">
         <div className="ml-4 flex w-1/2 justify-center align-bottom">
