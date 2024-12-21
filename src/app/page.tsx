@@ -33,13 +33,8 @@ const App: React.FC = () => {
   const [deviceList, setDeviceList] = useState<AudioDevice[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
-  const [sessionList, setSessionList] = useState<string[]>([
-    "Session 1",
-    "Session 2",
-    "Session 3",
-  ]);
-  const [selectedSession, setSelectedSession] = useState<string>(
-    sessionList[0] ?? "",
+  const [selectedSession, setSelectedSession] = useState<number | undefined>(
+    undefined,
   );
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -345,7 +340,6 @@ const App: React.FC = () => {
       </header>
 
       <SessionList
-        sessionList={sessionList}
         selectedSession={selectedSession}
         onSessionChange={handleSessionChange}
       />
