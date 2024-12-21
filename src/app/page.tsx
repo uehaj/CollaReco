@@ -244,7 +244,18 @@ const App: React.FC = () => {
       <header className="bg-gray-200 p-4">
         <div>
           <div className="flex items-baseline justify-start">
-            <h1 className="mb-1 text-slate-800">CollaReco</h1>
+            <span className="relative">
+              <span
+                className="text-shadow absolute left-0.5 top-0.5 text-4xl font-bold italic text-white"
+                style={{ textShadow: "2px 2px 3px rgba(0, 0, 0, 0.1);" }}
+              >
+                CollaReco
+              </span>
+              <span className="relative text-4xl font-bold italic text-blue-900">
+                CollaReco
+              </span>
+            </span>
+            {/* <h1 className="mb-1 italic text-slate-800 shadow-lg">CollaReco</h1> */}
             <span className="ml-4 text-lg text-slate-500">
               Collaborative Speech Recognition Tool
             </span>
