@@ -40,6 +40,8 @@ const App: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("編集" /*"LLM変換結果"*/);
   const { mutateAsync: addPost } = api.post.add.useMutation();
+  const { mutateAsync: addPostToSession } =
+    api.session.postMessage.useMutation();
 
   const [clientSideApiKey] = useAtom(clientSideApiKeyAtom);
   const [clientSideLLMCallEnabled, setClientSideLLMCallEnabled] = useAtom(
@@ -55,6 +57,8 @@ const App: React.FC = () => {
   useEffect(() => {
     recording.current = false;
   }, []);
+
+  const [sessionList] = api.session.list.useSuspenseQuery();
 
   useEffect(() => {
     const SpeechRecognition =
@@ -84,13 +88,22 @@ const App: React.FC = () => {
                 : clientSideLLMCallEnabled
                   ? await callLLMFromClient(recognizedText, clientSideApiKey)
                   : recognizedText;
+              const callLLM =
+                !!serverSideApiKeyEnabled && !serverSideExplicitPassThrough;
               const result = await addPost({
                 text: sendText,
-                callLLM:
-                  !!serverSideApiKeyEnabled && !serverSideExplicitPassThrough,
+                callLLM,
+              });
+              const sessionId = sessionList[0]?.id ?? "xxx";
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const result2 = await addPostToSession({
+                text: sendText,
+                callLLM,
+                sessionId,
+                userId: "1",
               });
               console.log(`====sendText=`, sendText);
-              console.log(`====result.text=`, result.text);
+              console.log(`====result.text=`, result2);
               setConvertedTranscripts((prev) => [...prev, result.text]);
               editor
                 ?.chain()
@@ -208,7 +221,8 @@ const App: React.FC = () => {
   };
 
   const handleSessionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedSession(event.target.value);
+    console.log(`event.target.value=`, event.target.value);
+    setSelectedSession(event.target.selectedIndex);
   };
 
   const handleLLMCallEnabledChange = (

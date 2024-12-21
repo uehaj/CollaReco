@@ -26,4 +26,3 @@ export const postRouter = createTRPCRouter({
       return { text: result };
     }),
 });
-

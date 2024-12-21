@@ -15,6 +15,31 @@ model Session {
     name      String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    messages  Message[]
 
 //    @@index([name])
+}
+
+// userはmessageを保持する(m:n)。
+model User {
+    id        String   @id @default(cuid())
+    name      String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    messages  Message[]
+}
+
+// messageはsessionに所属する(1:n)。userはmessageを保持する(1:n)。
+model Message {
+    id        String   @id @default(cuid())
+    text      String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    // user      User     @relation(fields: [userId], references: [id])
+    // userId    String
+    user      User?     @relation(fields: [userId], references: [id])
+    userId    String?
+    session   Session  @relation(fields: [sessionId], references: [id])
+    sessionId String
+
 }
