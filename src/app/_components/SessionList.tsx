@@ -6,7 +6,7 @@ import React from "react";
 import { api } from "~/trpc/react";
 
 interface SessionListProps {
-  selectedSession?: number;
+  selectedSession?: string;
   onSessionChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
@@ -16,12 +16,11 @@ const SessionList: React.FC<SessionListProps> = ({
 }) => {
   const [sessionList] = api.session.list.useSuspenseQuery();
 
-  const defaultValue =
-    sessionList.length === 0
-      ? "No sessions"
-      : selectedSession
-        ? sessionList?.[selectedSession]?.name
-        : "Select a session";
+  if (sessionList.length === 0) {
+    return <div>No sessions</div>;
+  }
+
+  const defaultValue = selectedSession ?? sessionList[0]?.id;
 
   return (
     <label htmlFor="session-select" className="p-2">
@@ -33,7 +32,7 @@ const SessionList: React.FC<SessionListProps> = ({
         onChange={onSessionChange}
       >
         {sessionList.map((session) => (
-          <option key={session.id} value={session.name}>
+          <option key={session.id} value={session.id}>
             {session.name}
           </option>
         ))}

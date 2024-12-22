@@ -24,27 +24,41 @@ import OrderedList from "@tiptap/extension-ordered-list";
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 //const websocketUrl = publicRuntimeConfig.NEXT_PUBLIC_WEBSOCKET_URL; // Use publicRuntimeConfig
 
-const ydoc = new Y.Doc(); // Initialize Y.Doc for shared editing
+const map = new Map<string, YDocConnection>();
 const websocketUrl: string = env.NEXT_PUBLIC_WEBSOCKET_URL ?? "ws://localhost:1234";
-if (websocketUrl !== 'http://no_websocket') {
-  const websocketProvider = new WebsocketProvider(
-    websocketUrl,
-    "CollaReco-demo",
-    ydoc,
-  );
-  websocketProvider.on("status", (event: { status: string }) => {
-    console.log(event.status); // logs "connected" or "disconnected"
-  });
+
+class YDocConnection {
+  ydoc: Y.Doc;
+  websocketProvider: WebsocketProvider;
+
+  constructor(sessionId: string) {
+    this.ydoc = new Y.Doc();
+    this.websocketProvider = new WebsocketProvider(
+      websocketUrl,
+      `CollaReco-${sessionId}`,
+      this.ydoc,
+    );
+    this.websocketProvider.on("status", (event: { status: string }) => {
+      console.log(event.status); // logs "connected" or "disconnected"
+    });
+  }
 }
 
-export default function useSharedEditor() {
+function useYdoc(sessionId: string) {
+  const ydocConnection = map.get(sessionId) ?? new YDocConnection(sessionId);
+  map.set(sessionId, ydocConnection);
+  return ydocConnection;
+}
+
+export default function useSharedEditor(sessionId: string) {
+  const ydocConnection = useYdoc(sessionId)
   const editor = useEditor({
     // TODO: unset schema and setup for List edit
     // https://tiptap.dev/docs/editor/extensions/nodes/list-item
     // tailwind setting: https://dev.to/theresa_okoro/how-to-use-tiptap-rich-text-editor-with-nextjs-and-tailwind-css-a-simple-guide-18c2
     extensions: [
       Collaboration.configure({
-        document: ydoc, // Configure Y.Doc for collaboration
+        document: ydocConnection.ydoc, // Configure Y.Doc for collaboration
       }),
       StarterKit,
       // Heading.configure({

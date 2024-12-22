@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
@@ -21,7 +25,6 @@ interface AudioDevice {
 }
 
 const App: React.FC = () => {
-  const editor = useSharedEditor();
   const recording = useRef<boolean>(false);
   const [, setRecognizeCount] = useState<number>(0);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(
@@ -56,6 +59,12 @@ const App: React.FC = () => {
 
   const [sessionList] = api.session.list.useSuspenseQuery();
   const [selectedSession, setSelectedSession] = useAtom(selectedSessionAtom);
+  useEffect(() => {
+    setSelectedSession(sessionList[0]?.id);
+  }, [sessionList, setSelectedSession]);
+
+  const utils = api.useUtils();
+  const editor = useSharedEditor(selectedSession ?? "");
 
   useEffect(() => {
     const SpeechRecognition =
@@ -87,17 +96,15 @@ const App: React.FC = () => {
               const callLLM =
                 !!serverSideApiKeyEnabled && !serverSideExplicitPassThrough;
 
-              const sessionId = sessionList[selectedSession]?.id;
-              if (sessionId === undefined) {
-                throw new Error("sessionId is undefined");
+              if (selectedSession === undefined) {
+                throw new Error("session unselected");
               }
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const result = await postMessage({
                 text: sendText,
                 callLLM,
-                sessionId,
+                sessionId: selectedSession,
               });
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+              void utils.session.invalidate();
               setConvertedTranscripts((prev) => [...prev, result.text]);
               editor
                 ?.chain()
@@ -169,6 +176,7 @@ const App: React.FC = () => {
     sessionList,
     selectedSession,
     postMessage,
+    utils.session,
   ]);
 
   const dialogRef = useRef<HTMLDialogElement | null>(null);
@@ -212,7 +220,7 @@ const App: React.FC = () => {
   };
 
   const handleSessionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedSession(event.target.selectedIndex);
+    setSelectedSession(event.target.value);
   };
 
   const handleLLMCallEnabledChange = (
@@ -353,12 +361,11 @@ const App: React.FC = () => {
           </div>
         </div>
       </header>
-
       <SessionList
         selectedSession={selectedSession}
         onSessionChange={handleSessionChange}
       />
-
+      sessionId={selectedSession}
       <div className="flex w-full">
         <div className="ml-4 flex w-1/2 justify-center align-bottom">
           <div className="font-bold">認識履歴(Web Speech Recognition API)</div>
@@ -379,7 +386,6 @@ const App: React.FC = () => {
         </div>
       </div>
       <div className="flex flex-col"></div>
-
       <div className="flex flex-1 overflow-hidden">
         <Transcript />
 
