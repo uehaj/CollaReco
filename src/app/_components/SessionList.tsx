@@ -25,7 +25,7 @@ const SessionList: React.FC<SessionListProps> = ({
 
   return (
     <label htmlFor="session-select" className="p-2">
-      <h3 className="mr-2 mt-0 inline-block">セッション: </h3>
+      <h4 className="mr-2 mt-0 inline-block">セッション: </h4>
       <select
         className="select select-bordered"
         id="session-select"

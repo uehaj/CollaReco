@@ -23,13 +23,12 @@ async function main() {
     // });
     // console.log(`users = `, users)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    await prisma.message.createMany({
-        data: [{
+    await prisma.message.create({
+        data: {
             text: 'Text 1',
             session: { create: { "name": "session" } },
             user: { create: { "name": "anonymous1" } }
-        }],
-
+        },
     });
 }
 

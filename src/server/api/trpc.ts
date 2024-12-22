@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /**
  * YOU PROBABLY DON'T NEED TO EDIT THIS FILE, UNLESS:
  * 1. You want to modify request context (see Part 1).
@@ -105,8 +108,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
 
-const isAuthed = t.middleware(({ ctx, next }) => {
-  console.log(`ctx=`, ctx)
+const isAuthed = t.middleware(async ({ ctx, next }) => {
   // ctx.user は User | undefined
   //  if (!ctx.user) {
   // throw new TRPCError({ code: 'UNAUTHORIZED' });
@@ -117,8 +119,25 @@ const isAuthed = t.middleware(({ ctx, next }) => {
   //     // ctx.user は User
   //     user: ctx.user,
   //   },
-  // }); 'remote-user': 'default', 
-  return next({ ctx: { ...ctx, 'headers': { ...ctx.headers, 'remote-user': 'defaultUser' } } })
+  // }); 'remote-user': 'default',
+  const remoteUser = ctx.headers.get('remote-user') ?? 'defaultUser';
+  let user = await ctx.db.user.findFirst({
+    where: { name: remoteUser },
+  });
+  if (!user) {
+    console.log(`create user ${remoteUser}`);
+    user = await ctx.db.user.create({
+      data: {
+        name: remoteUser,
+      },
+    })
+  }
+  if (!user) {
+    console.error('user' + remoteUser + ' not found');
+    throw new TRPCError({ code: 'UNAUTHORIZED' });
+  }
+
+  return next({ ctx: { ...ctx, user } })
 });
 
 export const protectedProcedure = publicProcedure.use(isAuthed);

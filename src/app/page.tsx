@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, RefObject } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Tiptap from "~/app/_components/Tiptap";
 import useSharedEditor from "~/hooks/useSharedEditor";
 import { api } from "~/trpc/react";
@@ -9,9 +9,11 @@ import { useAtom } from "jotai";
 import {
   clientSideApiKeyAtom,
   clientSideLLMCallEnabledAtom,
+  selectedSessionAtom,
 } from "~/utils/atoms";
 import { callLLMFromClient } from "~/utils/llm/llmFromClient";
 import SessionList from "~/app/_components/SessionList";
+import Transcript from "./_components/Transcript";
 
 interface AudioDevice {
   deviceId: string;
@@ -25,7 +27,6 @@ const App: React.FC = () => {
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(
     null,
   );
-  const [transcripts, setTranscripts] = useState<string[]>([]);
   const [convertedTranscripts, setConvertedTranscripts] = useState<string[]>(
     [],
   );
@@ -33,23 +34,18 @@ const App: React.FC = () => {
   const [deviceList, setDeviceList] = useState<AudioDevice[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
-  const [selectedSession, setSelectedSession] = useState<number | undefined>(
-    undefined,
-  );
-
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("編集" /*"LLM変換結果"*/);
-  const { mutateAsync: addPost } = api.post.add.useMutation();
-  const { mutateAsync: addPostToSession } =
-    api.session.postMessage.useMutation();
+
+  const { mutateAsync: postMessage } = api.session.postMessage.useMutation();
 
   const [clientSideApiKey] = useAtom(clientSideApiKeyAtom);
   const [clientSideLLMCallEnabled, setClientSideLLMCallEnabled] = useAtom(
     clientSideLLMCallEnabledAtom,
   );
 
-  const output = api.post.config.useQuery();
-  const serverSideApiKeyEnabled = output.data?.serverSideApiKeyEnabled;
+  const [config] = api.post.config.useSuspenseQuery();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const serverSideApiKeyEnabled = config.serverSideApiKeyEnabled;
 
   const [serverSideExplicitPassThrough, setServerSideExplicitPassThrough] =
     useState(false);
@@ -59,6 +55,7 @@ const App: React.FC = () => {
   }, []);
 
   const [sessionList] = api.session.list.useSuspenseQuery();
+  const [selectedSession, setSelectedSession] = useAtom(selectedSessionAtom);
 
   useEffect(() => {
     const SpeechRecognition =
@@ -72,16 +69,15 @@ const App: React.FC = () => {
     const rec = new SpeechRecognition();
     rec.lang = "ja-JP";
     rec.interimResults = true;
-    rec.continuous = false;
-    // rec.continuous = true;
-    console.log(`1====clientSideLLMCallEnabled=`, clientSideLLMCallEnabled);
+    rec.continuous = false; // rec.continuous = true;
+
     const onResult = (event: SpeechRecognitionEvent) => {
       for (const result of event.results) {
         if (result.isFinal) {
           const recognizedText = result?.[0]?.transcript;
           console.log(`recognizedText = `, recognizedText);
           if (recognizedText) {
-            setTranscripts((prev) => [...prev, recognizedText]);
+            // setTranscripts((prev) => [...prev, recognizedText]);
             void (async () => {
               const sendText = serverSideApiKeyEnabled
                 ? recognizedText
@@ -90,24 +86,23 @@ const App: React.FC = () => {
                   : recognizedText;
               const callLLM =
                 !!serverSideApiKeyEnabled && !serverSideExplicitPassThrough;
-              const result = await addPost({
-                text: sendText,
-                callLLM,
-              });
-              const sessionId = sessionList[0]?.id ?? "xxx";
+
+              const sessionId = sessionList[selectedSession]?.id;
+              if (sessionId === undefined) {
+                throw new Error("sessionId is undefined");
+              }
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              const result2 = await addPostToSession({
+              const result = await postMessage({
                 text: sendText,
                 callLLM,
                 sessionId,
-                userId: "1",
               });
-              console.log(`====sendText=`, sendText);
-              console.log(`====result.text=`, result2);
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
               setConvertedTranscripts((prev) => [...prev, result.text]);
               editor
                 ?.chain()
                 .focus("end", { scrollIntoView: true })
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 .insertContent(`<li>${result.text}</li>`)
                 .run();
             })();
@@ -167,18 +162,14 @@ const App: React.FC = () => {
     };
   }, [
     editor,
-    addPost,
     serverSideApiKeyEnabled,
     clientSideLLMCallEnabled,
     clientSideApiKey,
     serverSideExplicitPassThrough,
+    sessionList,
+    selectedSession,
+    postMessage,
   ]);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [transcripts]);
 
   const dialogRef = useRef<HTMLDialogElement | null>(null);
 
@@ -221,7 +212,6 @@ const App: React.FC = () => {
   };
 
   const handleSessionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    console.log(`event.target.value=`, event.target.value);
     setSelectedSession(event.target.selectedIndex);
   };
 
@@ -391,13 +381,7 @@ const App: React.FC = () => {
       <div className="flex flex-col"></div>
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-1/2 overflow-auto">
-          <ul>
-            {transcripts.map((transcript, index) => (
-              <li key={index}>{transcript}</li>
-            ))}
-          </ul>
-        </div>
+        <Transcript />
 
         <div className="w-1/2 overflow-auto border-l-2 border-gray-200">
           {activeTab === "LLM変換結果" && (

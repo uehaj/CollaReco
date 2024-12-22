@@ -12,6 +12,7 @@ export const postRouter = createTRPCRouter({
       serverSideApiKeyEnabled: !!(env.OPENAI_API_KEY ?? env.AZURE_API_KEY)
     }
   }),
+
   add: publicProcedure
     .input(z.object({ text: z.string(), callLLM: z.boolean() }))
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
