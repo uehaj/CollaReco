@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor } from "@tiptap/react";
+import { Editor, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
 import * as Y from "yjs";
@@ -24,7 +24,8 @@ import OrderedList from "@tiptap/extension-ordered-list";
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 //const websocketUrl = publicRuntimeConfig.NEXT_PUBLIC_WEBSOCKET_URL; // Use publicRuntimeConfig
 
-const map = new Map<string, YDocConnection>();
+const ydocMap = new Map<string, YDocConnection>();
+export const editorMap = new Map<string, Editor>();
 const websocketUrl: string = env.NEXT_PUBLIC_WEBSOCKET_URL ?? "ws://localhost:1234";
 
 class YDocConnection {
@@ -32,6 +33,7 @@ class YDocConnection {
   websocketProvider: WebsocketProvider;
 
   constructor(sessionId: string) {
+    console.log(`=========YdocConnection(${sessionId})============`);
     this.ydoc = new Y.Doc();
     this.websocketProvider = new WebsocketProvider(
       websocketUrl,
@@ -44,14 +46,23 @@ class YDocConnection {
   }
 }
 
-function useYdoc(sessionId: string) {
-  const ydocConnection = map.get(sessionId) ?? new YDocConnection(sessionId);
-  map.set(sessionId, ydocConnection);
-  return ydocConnection;
+function getYdoc(sessionId: string) {
+  const ydoc = ydocMap.get(sessionId)
+  if (!ydoc) {
+    const ydocConnection = new YDocConnection(sessionId)
+    ydocMap.set(sessionId, ydocConnection);
+    return ydocConnection;
+  }
+  return ydoc;
+}
+
+export function getEditor(sessionId: string) {
+  return editorMap.get(sessionId);
 }
 
 export default function useSharedEditor(sessionId: string) {
-  const ydocConnection = useYdoc(sessionId)
+  console.log(`=========useSharedEditor(${sessionId})============`);
+  const ydocConnection = getYdoc(sessionId)
   const editor = useEditor({
     // TODO: unset schema and setup for List edit
     // https://tiptap.dev/docs/editor/extensions/nodes/list-item
@@ -85,6 +96,8 @@ export default function useSharedEditor(sessionId: string) {
 <h4>Start Recognition</h4>
   `,
   });
-
+  if (editor) {
+    editorMap.set(sessionId, editor);
+  }
   return editor;
 }

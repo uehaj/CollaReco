@@ -5,12 +5,12 @@ import React from "react";
 
 import { api } from "~/trpc/react";
 
-interface SessionListProps {
+interface SessionSelectProps {
   selectedSession?: string;
   onSessionChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
-const SessionList: React.FC<SessionListProps> = ({
+const SessionSelect: React.FC<SessionSelectProps> = ({
   selectedSession,
   onSessionChange,
 }) => {
@@ -41,4 +41,4 @@ const SessionList: React.FC<SessionListProps> = ({
   );
 };
 
-export default SessionList;
+export default SessionSelect;

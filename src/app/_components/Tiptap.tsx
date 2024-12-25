@@ -1,14 +1,20 @@
 "use client";
 
 import React from "react";
-import type { Editor } from "@tiptap/core";
+//import type { Editor } from "@tiptap/core";
 import { EditorContent } from "@tiptap/react";
+import useSharedEditor from "~/hooks/useSharedEditor";
 
 type Props = {
-  editor: Editor | null;
+  sessionId: string;
 };
-const Tiptap = ({ editor }: Props) => {
-  return <EditorContent editor={editor} />;
+
+const Tiptap = ({ sessionId }: Props) => {
+  console.log(`=========Tiptap(${sessionId})============`);
+  const editor = useSharedEditor(sessionId ?? "");
+  return (
+    <EditorContent key="sessionId" id="sessionId" editor={editor ?? null} />
+  );
 };
 
 export default Tiptap;

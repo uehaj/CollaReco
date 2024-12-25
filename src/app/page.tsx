@@ -6,42 +6,39 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Tiptap from "~/app/_components/Tiptap";
-import useSharedEditor from "~/hooks/useSharedEditor";
 import { api } from "~/trpc/react";
 import ModalComponent from "~/app/_components/ModalComponent";
 import { useAtom } from "jotai";
 import {
   clientSideApiKeyAtom,
   clientSideLLMCallEnabledAtom,
+  errorAtom,
+  recognitionAtom,
+  recordingAtom,
   selectedSessionAtom,
+  serverSideExplicitPassThroughAtom,
 } from "~/utils/atoms";
 import { callLLMFromClient } from "~/utils/llm/llmFromClient";
 import SessionList from "~/app/_components/SessionList";
 import Transcript from "./_components/Transcript";
-
-interface AudioDevice {
-  deviceId: string;
-  label: string;
-}
+import useSharedEditor, { getEditor } from "~/hooks/useSharedEditor";
+import Session from "./_components/Session";
+import useRecognition from "~/hooks/useRecognition";
+import SessionSelect from "./_components/SessionSelect";
 
 const App: React.FC = () => {
-  const recording = useRef<boolean>(false);
+  const [recording, setRecording] = useAtom<boolean>(recordingAtom);
+  const [recognition, setRecognition] = useAtom<SpeechRecognition | null>(
+    recognitionAtom,
+  );
   const [, setRecognizeCount] = useState<number>(0);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(
-    null,
-  );
-  const [convertedTranscripts, setConvertedTranscripts] = useState<string[]>(
-    [],
-  );
-  const [interimResult, setIntrimResult] = useState<string>("");
-  const [deviceList, setDeviceList] = useState<AudioDevice[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("編集" /*"LLM変換結果"*/);
+  // const [convertedTranscripts, setConvertedTranscripts] = useState<string[]>(
+  //   [],
+  // );
 
-  const { mutateAsync: postMessage } = api.session.postMessage.useMutation();
+  const [error] = useAtom(errorAtom);
 
-  const [clientSideApiKey] = useAtom(clientSideApiKeyAtom);
+  // const [clientSideApiKey] = useAtom(clientSideApiKeyAtom);
   const [clientSideLLMCallEnabled, setClientSideLLMCallEnabled] = useAtom(
     clientSideLLMCallEnabledAtom,
   );
@@ -51,133 +48,14 @@ const App: React.FC = () => {
   const serverSideApiKeyEnabled = config.serverSideApiKeyEnabled;
 
   const [serverSideExplicitPassThrough, setServerSideExplicitPassThrough] =
-    useState(false);
+    useAtom(serverSideExplicitPassThroughAtom);
 
-  useEffect(() => {
-    recording.current = false;
-  }, []);
+  // useEffect(() => {
+  //   recording.current = false;
+  // }, []);
 
-  const [sessionList] = api.session.list.useSuspenseQuery();
   const [selectedSession, setSelectedSession] = useAtom(selectedSessionAtom);
-  useEffect(() => {
-    setSelectedSession(sessionList[0]?.id);
-  }, [sessionList, setSelectedSession]);
-
-  const utils = api.useUtils();
-  const editor = useSharedEditor(selectedSession ?? "");
-
-  useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      setError("このブラウザは音声認識APIをサポートしていません。");
-      return;
-    }
-
-    const rec = new SpeechRecognition();
-    rec.lang = "ja-JP";
-    rec.interimResults = true;
-    rec.continuous = false; // rec.continuous = true;
-
-    const onResult = (event: SpeechRecognitionEvent) => {
-      for (const result of event.results) {
-        if (result.isFinal) {
-          const recognizedText = result?.[0]?.transcript;
-          console.log(`recognizedText = `, recognizedText);
-          if (recognizedText) {
-            // setTranscripts((prev) => [...prev, recognizedText]);
-            void (async () => {
-              const sendText = serverSideApiKeyEnabled
-                ? recognizedText
-                : clientSideLLMCallEnabled
-                  ? await callLLMFromClient(recognizedText, clientSideApiKey)
-                  : recognizedText;
-              const callLLM =
-                !!serverSideApiKeyEnabled && !serverSideExplicitPassThrough;
-
-              if (selectedSession === undefined) {
-                throw new Error("session unselected");
-              }
-              const result = await postMessage({
-                text: sendText,
-                callLLM,
-                sessionId: selectedSession,
-              });
-              void utils.session.invalidate();
-              setConvertedTranscripts((prev) => [...prev, result.text]);
-              editor
-                ?.chain()
-                .focus("end", { scrollIntoView: true })
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                .insertContent(`<li>${result.text}</li>`)
-                .run();
-            })();
-          }
-        } else {
-          if (result?.[0]?.transcript) {
-            setIntrimResult(result?.[0]?.transcript);
-          }
-        }
-      }
-    };
-    console.log(`1==== onResult=`, onResult);
-    rec.addEventListener("result", onResult);
-
-    rec.onend = () => {
-      if (recording.current) {
-        rec.start(); // 自動再起動
-      }
-    };
-
-    rec.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.log("認識エラー:", event.error);
-      if (event.error === "no-speech") {
-        console.log("no-speech and restart");
-        rec.stop();
-      }
-    };
-
-    rec.onspeechstart = () => {
-      console.log("Speech detected", JSON.stringify(recording.current));
-    };
-
-    rec.onspeechend = () => {
-      console.log("Speech detection ended", JSON.stringify(recording.current));
-    };
-    console.log(`setRecognition`, rec);
-    setRecognition(rec);
-
-    void navigator.mediaDevices.enumerateDevices().then((devices) => {
-      const audioInputs = devices
-        .filter((device) => device.kind === "audioinput")
-        .map((device) => ({
-          deviceId: device.deviceId,
-          label: device.label || "マイク (ラベルなし)",
-        }));
-      setDeviceList(audioInputs);
-      if (audioInputs[0] && audioInputs.length > 0) {
-        setSelectedDevice(audioInputs[0].deviceId);
-      }
-    });
-
-    return () => {
-      console.log(`------------------- rec.stop()`);
-      rec.stop();
-      rec.removeEventListener("result", onResult);
-      setRecognition(null);
-    };
-  }, [
-    editor,
-    serverSideApiKeyEnabled,
-    clientSideLLMCallEnabled,
-    clientSideApiKey,
-    serverSideExplicitPassThrough,
-    sessionList,
-    selectedSession,
-    postMessage,
-    utils.session,
-  ]);
+  const [deviceList, selectedDevice, setSelectedDevice] = useRecognition();
 
   const dialogRef = useRef<HTMLDialogElement | null>(null);
 
@@ -191,12 +69,12 @@ const App: React.FC = () => {
         })
         .then(() => {
           recognition.start();
-          recording.current = true;
+          setRecording(true);
           setRecognizeCount((prevValue) => prevValue + 1);
         })
         .catch((err) => {
           console.error("マイクへのアクセスに失敗しました。", err);
-          recording.current = false;
+          setRecording(false);
         });
     }
   };
@@ -210,7 +88,7 @@ const App: React.FC = () => {
   const handleAbort = () => {
     if (recognition) {
       recognition.abort();
-      recording.current = false;
+      setRecording(false);
       setRecognizeCount((prevValue) => prevValue + 1);
     }
   };
@@ -234,14 +112,6 @@ const App: React.FC = () => {
   ) => {
     setServerSideExplicitPassThrough(event.target.checked);
   };
-
-  function llmMode() {
-    return clientSideLLMCallEnabled && !!clientSideApiKey
-      ? "LLM変換結果(クライアント側でのLLM呼び出し)"
-      : serverSideApiKeyEnabled && !serverSideExplicitPassThrough
-        ? "LLM変換結果(サーバー側でのLLM呼び出し)"
-        : "LLMパススルー";
-  }
 
   function handleShowDaialog() {
     console.log(`dialogRef.current`, dialogRef.current);
@@ -284,7 +154,7 @@ const App: React.FC = () => {
                     value={selectedDevice}
                     onChange={handleDeviceChange}
                   >
-                    {deviceList.map((device) => (
+                    {deviceList?.map((device) => (
                       <option key={device.deviceId} value={device.deviceId}>
                         {device.label}
                       </option>
@@ -294,7 +164,7 @@ const App: React.FC = () => {
               </span>
             </div>
             <div className="mb-2">
-              {recording.current ? (
+              {recording ? (
                 <span className="p-4 text-red-700">●</span>
               ) : (
                 <span className="p-4">■</span>
@@ -302,21 +172,21 @@ const App: React.FC = () => {
               <button
                 className="btn btn-outline btn-sm mr-2"
                 onClick={handleStart}
-                disabled={recording.current}
+                disabled={recording}
               >
                 音声認識を開始
               </button>
               <button
                 className="btn btn-outline btn-sm mr-2"
                 onClick={handleAbort}
-                disabled={!recording.current}
+                disabled={!recording}
               >
                 音声認識を中止
               </button>
               <button
                 className="btn btn-outline btn-sm mr-2"
                 onClick={handleStop}
-                disabled={!recording.current}
+                disabled={!recording}
               >
                 音声認識を区切る
               </button>
@@ -329,15 +199,12 @@ const App: React.FC = () => {
                         type="checkbox"
                         checked={clientSideLLMCallEnabled}
                         onChange={handleLLMCallEnabledChange}
-                        disabled={recording.current}
+                        disabled={recording}
                       />
                       クライアント側からのLLM呼び出し
                     </label>
                     {clientSideLLMCallEnabled && (
-                      <button
-                        onClick={handleShowDaialog}
-                        disabled={recording.current}
-                      >
+                      <button onClick={handleShowDaialog} disabled={recording}>
                         ✎ Set API Key
                       </button>
                     )}
@@ -351,7 +218,7 @@ const App: React.FC = () => {
                       type="checkbox"
                       checked={serverSideExplicitPassThrough}
                       onChange={handleServerSideExplicitPassThroughChange}
-                      disabled={recording.current}
+                      disabled={recording}
                     />
                     LLMパススルー
                   </label>
@@ -361,49 +228,12 @@ const App: React.FC = () => {
           </div>
         </div>
       </header>
-      <SessionList
+      <SessionSelect
         selectedSession={selectedSession}
         onSessionChange={handleSessionChange}
       />
       sessionId={selectedSession}
-      <div className="flex w-full">
-        <div className="ml-4 flex w-1/2 justify-center align-bottom">
-          <div className="font-bold">認識履歴(Web Speech Recognition API)</div>
-        </div>
-        <div className="mr-4 flex w-1/2 space-x-2 border-l-2 border-gray-200 p-2">
-          <button
-            className={`${activeTab === "LLM変換結果" ? "border-2 border-teal-500" : "border-transparent"} btn w-1/2`}
-            onClick={() => setActiveTab("LLM変換結果")}
-          >
-            {llmMode()}
-          </button>
-          <button
-            className={`${activeTab === "編集" ? "border-2 border-teal-500" : "border-transparent hover:border-gray-200"} btn w-1/2`}
-            onClick={() => setActiveTab("編集")}
-          >
-            編集
-          </button>
-        </div>
-      </div>
-      <div className="flex flex-col"></div>
-      <div className="flex flex-1 overflow-hidden">
-        <Transcript />
-
-        <div className="w-1/2 overflow-auto border-l-2 border-gray-200">
-          {activeTab === "LLM変換結果" && (
-            <ul>
-              {convertedTranscripts.map((convertedTranscript, index) => (
-                <li key={index}>{convertedTranscript}</li>
-              ))}
-            </ul>
-          )}
-          {activeTab === "編集" && <Tiptap editor={editor} />}
-        </div>
-      </div>
-      <footer className="bg-gray-200 p-4">
-        <h2 className="mb-1 mt-1">途中経過:</h2>
-        <p>{interimResult}</p>
-      </footer>
+      {selectedSession && <Session sessionId={selectedSession} />}
       {!serverSideApiKeyEnabled && <ModalComponent ref={dialogRef} />}
     </div>
   );

@@ -29,20 +29,6 @@ export async function callLLMFromServer(userInput: string): Promise<string> {
             });
         }
         else if (env.AZURE_API_KEY) {
-            /*
-
-            AOAI_llm = AzureChatOpenAI(
-                model=llms[llm_id]['GPT_MODEL'],
-                openai_api_type=llms[llm_id]['API_TYPE'],
-                azure_endpoint=api_base,
-                openai_api_key=api_key,
-                azure_deployment=llms[llm_id]['DEPLOY_NAME'],
-                openai_api_version=api_version,
-                temperature=llms[llm_id]['TEMPERATURE'],
-                max_tokens=llms[llm_id]['MAX_TOKENS'],
-                request_timeout=60,
-                streaming=True,
-             */
             llm = new AzureChatOpenAI({
                 openAIApiKey: env.AZURE_API_KEY,
                 openAIApiVersion: env.AZURE_API_VERSION,
@@ -61,29 +47,6 @@ export async function callLLMFromServer(userInput: string): Promise<string> {
         const chain = prompt.pipe(llm).pipe(parser)
         const res = await chain.invoke({ input: userInput });
         console.log(`llm answer = `, res)
-        // const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        //     method: "POST",
-        //     headers: {
-        //         "Content-Type": "application/json",
-        //         Authorization: `Bearer ${apiKey}`,
-        //     },
-        //     body: JSON.stringify({
-        //         model: "gpt-4o-mini", // 使用するモデル名
-        //         messages: [
-        //             { role: "system", content: instructions },
-        //             { role: "user", content: userInput }
-        //         ],
-        //     }),
-        // });
-
-        // if (!res.ok) {
-        //     throw new Error(`Error: ${res.status}`);
-        // }
-
-        // // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        // const data = await res.json();
-        // // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-        // return data.choices[0].message.content;
         return res;
     } catch (error) {
         console.error("Error calling OpenAI API:", error);
