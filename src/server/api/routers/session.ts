@@ -1,16 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { z } from "zod";
-import { env } from "~/env";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import type { Prisma } from '@prisma/client';
 import { schemaForType } from "~/utils/typeUtil";
 import { callLLMFromServer } from "~/utils/llm/llmFromServer";
-import { TRPCError } from "@trpc/server";
 
 export type Session = Prisma.SessionUncheckedCreateInput
 export const SessionSchema = schemaForType<Session>()(z.object({
@@ -29,7 +22,6 @@ export const sessionRouter = createTRPCRouter({
     .input(z.object({ name: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const { name } = input;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       return await ctx.db.session.create({
         data: {
           name,

@@ -1,25 +1,25 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import Tiptap from "~/app/_components/Tiptap";
+import React, { useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 import { useAtom } from "jotai";
 import {
   clientSideApiKeyAtom,
   clientSideLLMCallEnabledAtom,
-  errorAtom,
   recognitionAtom,
   recordingAtom,
-  serverSideExplicitPassThroughAtom,
 } from "~/utils/atoms";
 
-import Transcript from "~/app/_components/Transcript";
-import useSharedEditor from "~/hooks/useSharedEditor";
 import { callLLMFromClient } from "~/utils/llm/llmFromClient";
+
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (!SpeechRecognition) {
+  alert("このブラウザは音声認識APIをサポートしていません。");
+}
+
+const rec = new SpeechRecognition();
 
 interface AudioDevice {
   deviceId: string;
@@ -32,14 +32,11 @@ export default function useRecognition(
 ): [AudioDevice[], string, React.Dispatch<React.SetStateAction<string>>] {
   const [config] = api.post.config.useSuspenseQuery();
 
-  const [, setError] = useAtom(errorAtom);
+  // const [, setError] = useAtom(errorAtom);
   const serverSideApiKeyEnabled = config.serverSideApiKeyEnabled;
   const [clientSideLLMCallEnabled] = useAtom(clientSideLLMCallEnabledAtom);
 
-  // const [serverSideExplicitPassThrough, setServerSideExplicitPassThrough] =
-  //   useAtom(serverSideExplicitPassThroughAtom);
-
-  const [deviceList, setDeviceList] = useState<AudioDevice[] | undefined>();
+  const [deviceList, setDeviceList] = useState<AudioDevice[]>();
   const [selectedDevice, setSelectedDevice] = useState<string>("");
 
   const [clientSideApiKey] = useAtom(clientSideApiKeyAtom);
@@ -47,7 +44,6 @@ export default function useRecognition(
   const [, setRecognition] = useAtom<SpeechRecognition | null>(recognitionAtom);
 
   useEffect(() => {
-    console.log(`useEffect`);
     if (!deviceList) {
       void navigator.mediaDevices.enumerateDevices().then((devices) => {
         const audioInputs = devices
@@ -66,15 +62,8 @@ export default function useRecognition(
 
   useEffect(
     () => {
-      const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
+      console.log(`useRecognition useEffect recording: ${recording}`);
 
-      if (!SpeechRecognition) {
-        setError("このブラウザは音声認識APIをサポートしていません。");
-        return;
-      }
-
-      const rec = new SpeechRecognition();
       rec.lang = "ja-JP";
       rec.interimResults = true;
       rec.continuous = false; // rec.continuous = true;
@@ -102,14 +91,14 @@ export default function useRecognition(
         }
       };
       rec.addEventListener("result", onResult);
-      const onStart = (event: Event) => {
+      const onStart = (_event: Event) => {
         console.log("Speech start: ", JSON.stringify(recording));
       };
       rec.addEventListener("end", onStart);
       const onEnd = (event: Event) => {
         console.log("Speech onend: ", JSON.stringify(recording));
         if (recording) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           (event.target as any).start(); // 自動再起動
         }
       };
@@ -135,21 +124,6 @@ export default function useRecognition(
       rec.addEventListener("speechend", onSpeechEnd);
 
       setRecognition(rec);
-
-      // if (!deviceList) {
-      //   void navigator.mediaDevices.enumerateDevices().then((devices) => {
-      //     const audioInputs = devices
-      //       .filter((device) => device.kind === "audioinput")
-      //       .map((device) => ({
-      //         deviceId: device.deviceId,
-      //         label: device.label || "マイク (ラベルなし)",
-      //       }));
-      //     setDeviceList(audioInputs);
-      //     if (audioInputs[0] && audioInputs.length > 0) {
-      //       setSelectedDevice(audioInputs[0].deviceId);
-      //     }
-      //   });
-      // }
 
       return () => {
         rec.stop();

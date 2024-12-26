@@ -1,11 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
-import Tiptap from "~/app/_components/Tiptap";
+import React, { useState, useRef } from "react";
 import { api } from "~/trpc/react";
 import ModalComponent from "~/app/_components/ModalComponent";
 import { useAtom } from "jotai";
@@ -21,31 +16,20 @@ import useRecognition from "~/hooks/useRecognition";
 
 const App: React.FC = () => {
   const [recording, setRecording] = useAtom<boolean>(recordingAtom);
-  const [recognition, setRecognition] = useAtom<SpeechRecognition | null>(
-    recognitionAtom,
-  );
+  const [recognition] = useAtom<SpeechRecognition | null>(recognitionAtom);
   const [, setRecognizeCount] = useState<number>(0);
-  // const [convertedTranscripts, setConvertedTranscripts] = useState<string[]>(
-  //   [],
-  // );
 
   const [error] = useAtom(errorAtom);
 
-  // const [clientSideApiKey] = useAtom(clientSideApiKeyAtom);
   const [clientSideLLMCallEnabled, setClientSideLLMCallEnabled] = useAtom(
     clientSideLLMCallEnabledAtom,
   );
 
   const [config] = api.post.config.useSuspenseQuery();
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const serverSideApiKeyEnabled = config.serverSideApiKeyEnabled;
 
   const [serverSideExplicitPassThrough, setServerSideExplicitPassThrough] =
     useAtom(serverSideExplicitPassThroughAtom);
-
-  // useEffect(() => {
-  //   recording.current = false;
-  // }, []);
 
   const [deviceList, selectedDevice, setSelectedDevice] = useRecognition();
 
@@ -62,13 +46,13 @@ const App: React.FC = () => {
         .then(() => {
           recognition.start();
           console.log(`1 -> true`);
-          // setRecording(true);
+          setRecording(true);
           setRecognizeCount((prevValue) => prevValue + 1);
         })
         .catch((err) => {
           console.error("マイクへのアクセスに失敗しました。", err);
           console.log(`2 -> false`);
-          // setRecording(false);
+          setRecording(false);
         });
     }
   };
@@ -83,7 +67,7 @@ const App: React.FC = () => {
     if (recognition) {
       recognition.abort();
       console.log(`3 -> false`);
-      // setRecording(false);
+      setRecording(false);
       setRecognizeCount((prevValue) => prevValue + 1);
     }
   };
@@ -134,7 +118,6 @@ const App: React.FC = () => {
             </span>
           </div>
           {error && <p className="text-red-700">{error}</p>}
-          recording={JSON.stringify(recording)}
           <div className="rounded-lg bg-slate-300 p-2">
             <div>
               <span className="label">
