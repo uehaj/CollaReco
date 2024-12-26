@@ -33,7 +33,6 @@ class YDocConnection {
   websocketProvider: WebsocketProvider;
 
   constructor(sessionId: string) {
-    console.log(`=========YdocConnection(${sessionId})============`);
     this.ydoc = new Y.Doc();
     this.websocketProvider = new WebsocketProvider(
       websocketUrl,
@@ -61,7 +60,6 @@ export function getEditor(sessionId: string) {
 }
 
 export default function useSharedEditor(sessionId: string) {
-  console.log(`=========useSharedEditor(${sessionId})============`);
   const ydocConnection = getYdoc(sessionId)
   const editor = useEditor({
     // TODO: unset schema and setup for List edit

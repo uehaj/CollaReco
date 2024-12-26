@@ -12,17 +12,15 @@ import {
   clientSideApiKeyAtom,
   clientSideLLMCallEnabledAtom,
   errorAtom,
+  selectedSessionAtom,
   serverSideExplicitPassThroughAtom,
 } from "~/utils/atoms";
 import Transcript from "~/app/_components/Transcript";
 import useSharedEditor, { getEditor } from "~/hooks/useSharedEditor";
 import useRecognition from "~/hooks/useRecognition";
+import SessionSelect from "./SessionSelect";
 
-type Props = {
-  sessionId: string;
-};
-
-export default function Session({ sessionId }: Props) {
+export default function Session() {
   const [config] = api.post.config.useSuspenseQuery();
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const serverSideApiKeyEnabled = config.serverSideApiKeyEnabled;
@@ -71,19 +69,17 @@ export default function Session({ sessionId }: Props) {
   const [serverSideExplicitPassThrough, setServerSideExplicitPassThrough] =
     useAtom(serverSideExplicitPassThroughAtom);
 
-  //   useEffect(() => {
-  //     recording.current = false;
-  //   }, []);
+  const [selectedSession, setSelectedSession] = useAtom(selectedSessionAtom);
+  const [sessionList] = api.session.list.useSuspenseQuery();
+  const sessionId = selectedSession ?? sessionList[0]?.id;
 
-  //  const [sessionList] = api.session.list.useSuspenseQuery();
-  // const [selectedSession, setSelectedSession] = useAtom(selectedSessionAtom);
-  // useEffect(() => {
-  //   setSelectedSession(sessionList[0]?.id);
-  // }, [sessionList, setSelectedSession]);
+  if (sessionId === undefined) {
+    return <div>セッションがありません</div>;
+  }
 
-  // const utils = api.useUtils();
-
-  // const editor = useSharedEditor(sessionId);
+  const handleSessionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedSession(event.target.value);
+  };
 
   function llmMode() {
     return clientSideLLMCallEnabled && !!clientSideApiKey
@@ -95,6 +91,10 @@ export default function Session({ sessionId }: Props) {
 
   return (
     <>
+      <SessionSelect
+        sessionId={sessionId}
+        onSessionChange={handleSessionChange}
+      />
       <div className="flex w-full">
         <div className="ml-4 flex w-1/2 justify-center align-bottom">
           <div className="font-bold">認識履歴(Web Speech Recognition API)</div>
@@ -134,48 +134,6 @@ export default function Session({ sessionId }: Props) {
         <h2 className="mb-1 mt-1">途中経過:</h2>
         <p>{interimResult}</p>
       </footer>
-      {/*
-      <div className="flex w-full">
-        <div className="ml-4 flex w-1/2 justify-center align-bottom">
-          <div className="font-bold">認識履歴(Web Speech Recognition API)</div>
-        </div>
-        <div className="mr-4 flex w-1/2 space-x-2 border-l-2 border-gray-200 p-2">
-          <button
-            className={`${activeTab === "LLM変換結果" ? "border-2 border-teal-500" : "border-transparent"} btn w-1/2`}
-            onClick={() => setActiveTab("LLM変換結果")}
-          >
-            {llmMode()}
-          </button>
-          <button
-            className={`${activeTab === "編集" ? "border-2 border-teal-500" : "border-transparent hover:border-gray-200"} btn w-1/2`}
-            onClick={() => setActiveTab("編集")}
-          >
-            編集
-          </button>
-        </div>
-      </div>
-
-      <div className="flex flex-col"></div>
-      <div className="flex flex-1 overflow-hidden">
-        <Transcript />
-
-        <div className="w-1/2 overflow-auto border-l-2 border-gray-200">
-          {activeTab === "LLM変換結果" && (
-            <ul>
-              {convertedTranscripts.map((convertedTranscript, index) => (
-                <li key={index}>{convertedTranscript}</li>
-              ))}
-            </ul>
-          )}
-          {activeTab === "編集" && (
-            <Tiptap key={sessionId} sessionId={sessionId ?? ""} />
-          )}
-        </div>
-      </div>
-      <footer className="bg-gray-200 p-4">
-        <h2 className="mb-1 mt-1">途中経過:</h2>
-        <p>{interimResult}</p>
-      </footer> */}
     </>
   );
 }

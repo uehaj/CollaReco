@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import Tiptap from "~/app/_components/Tiptap";
 import { api } from "~/trpc/react";
 import { useAtom } from "jotai";
@@ -33,25 +33,36 @@ export default function useRecognition(
   const [config] = api.post.config.useSuspenseQuery();
 
   const [, setError] = useAtom(errorAtom);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const serverSideApiKeyEnabled = config.serverSideApiKeyEnabled;
-  const [clientSideLLMCallEnabled, setClientSideLLMCallEnabled] = useAtom(
-    clientSideLLMCallEnabledAtom,
-  );
+  const [clientSideLLMCallEnabled] = useAtom(clientSideLLMCallEnabledAtom);
 
-  const [serverSideExplicitPassThrough, setServerSideExplicitPassThrough] =
-    useAtom(serverSideExplicitPassThroughAtom);
+  // const [serverSideExplicitPassThrough, setServerSideExplicitPassThrough] =
+  //   useAtom(serverSideExplicitPassThroughAtom);
 
-  const [deviceList, setDeviceList] = useState<AudioDevice[] | undefined>(
-    undefined,
-  );
+  const [deviceList, setDeviceList] = useState<AudioDevice[] | undefined>();
   const [selectedDevice, setSelectedDevice] = useState<string>("");
 
-  const [clientSideApiKey, setClientSideApiKey] = useAtom(clientSideApiKeyAtom);
-  const [recording, setRecording] = useAtom<boolean>(recordingAtom);
-  const [recognition, setRecognition] = useAtom<SpeechRecognition | null>(
-    recognitionAtom,
-  );
+  const [clientSideApiKey] = useAtom(clientSideApiKeyAtom);
+  const [recording] = useAtom<boolean>(recordingAtom);
+  const [, setRecognition] = useAtom<SpeechRecognition | null>(recognitionAtom);
+
+  useEffect(() => {
+    console.log(`useEffect`);
+    if (!deviceList) {
+      void navigator.mediaDevices.enumerateDevices().then((devices) => {
+        const audioInputs = devices
+          .filter((device) => device.kind === "audioinput")
+          .map((device) => ({
+            deviceId: device.deviceId,
+            label: device.label || "マイク (ラベルなし)",
+          }));
+        setDeviceList(audioInputs);
+        if (audioInputs[0] && audioInputs.length > 0) {
+          setSelectedDevice(audioInputs[0].deviceId);
+        }
+      });
+    }
+  }, []);
 
   useEffect(
     () => {
@@ -72,7 +83,6 @@ export default function useRecognition(
         for (const result of event.results) {
           if (result.isFinal) {
             const recognizedText = result?.[0]?.transcript;
-            console.log(`recognizedText = `, recognizedText);
             if (recognizedText) {
               // setTranscripts((prev) => [...prev, recognizedText]);
               void (async () => {
@@ -82,25 +92,6 @@ export default function useRecognition(
                     ? await callLLMFromClient(recognizedText, clientSideApiKey)
                     : recognizedText;
                 void onFinalResult?.(sendText);
-
-                // const callLLM =
-                //   !!serverSideApiKeyEnabled && !serverSideExplicitPassThrough;
-
-                // if (sessionId) {
-                //   const result = await postMessage({
-                //     text: sendText,
-                //     callLLM,
-                //     sessionId: sessionId,
-                //   });
-                //   void utils.session.invalidate();
-                //   setConvertedTranscripts((prev) => [...prev, result.text]);
-                //   editor
-                //     ?.chain()
-                //     .focus("end", { scrollIntoView: true })
-                //     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                //     .insertContent(`<li>${result.text}</li>`)
-                //     .run();
-                // }
               })();
             }
           } else {
@@ -110,65 +101,69 @@ export default function useRecognition(
           }
         }
       };
-      console.log(`1==== onResult=`, onResult);
       rec.addEventListener("result", onResult);
-
-      rec.onend = () => {
+      const onStart = (event: Event) => {
+        console.log("Speech start: ", JSON.stringify(recording));
+      };
+      rec.addEventListener("end", onStart);
+      const onEnd = (event: Event) => {
         console.log("Speech onend: ", JSON.stringify(recording));
         if (recording) {
-          rec.start(); // 自動再起動
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (event.target as any).start(); // 自動再起動
         }
       };
+      rec.addEventListener("end", onEnd);
 
-      rec.onerror = (event: SpeechRecognitionErrorEvent) => {
+      const onError = (event: SpeechRecognitionErrorEvent) => {
         console.log("Speech onerror:", event.error);
         if (event.error === "no-speech") {
           console.log("no-speech and restart");
           rec.stop();
         }
       };
+      rec.addEventListener("error", onError);
 
-      rec.onspeechstart = () => {
+      const onSpeechStart = () => {
         console.log("Speech start: ", JSON.stringify(recording));
       };
+      rec.addEventListener("speechstart", onSpeechStart);
 
-      rec.onspeechend = () => {
+      const onSpeechEnd = () => {
         console.log("Speech end: ", JSON.stringify(recording));
       };
+      rec.addEventListener("speechend", onSpeechEnd);
 
       setRecognition(rec);
-      if (!deviceList) {
-        void navigator.mediaDevices.enumerateDevices().then((devices) => {
-          const audioInputs = devices
-            .filter((device) => device.kind === "audioinput")
-            .map((device) => ({
-              deviceId: device.deviceId,
-              label: device.label || "マイク (ラベルなし)",
-            }));
-          setDeviceList(audioInputs);
-          if (audioInputs[0] && audioInputs.length > 0) {
-            setSelectedDevice(audioInputs[0].deviceId);
-          }
-        });
-      }
+
+      // if (!deviceList) {
+      //   void navigator.mediaDevices.enumerateDevices().then((devices) => {
+      //     const audioInputs = devices
+      //       .filter((device) => device.kind === "audioinput")
+      //       .map((device) => ({
+      //         deviceId: device.deviceId,
+      //         label: device.label || "マイク (ラベルなし)",
+      //       }));
+      //     setDeviceList(audioInputs);
+      //     if (audioInputs[0] && audioInputs.length > 0) {
+      //       setSelectedDevice(audioInputs[0].deviceId);
+      //     }
+      //   });
+      // }
 
       return () => {
         rec.stop();
         rec.removeEventListener("result", onResult);
+        rec.removeEventListener("end", onEnd);
+        rec.removeEventListener("error", onError);
+        rec.removeEventListener("start", onStart);
+        rec.removeEventListener("speechstart", onSpeechStart);
+        rec.removeEventListener("speechend", onSpeechEnd);
         setRecognition(null);
       };
     },
-    [
-      // serverSideApiKeyEnabled,
-      // clientSideLLMCallEnabled,
-      // serverSideExplicitPassThrough,
-      // setError,
-      // onFinalResult,
-      // onIntrimResult,
-      // setRecognition,
-      // clientSideApiKey,
-      // recording,
-    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [recording],
   );
 
   return [deviceList, selectedDevice, setSelectedDevice];

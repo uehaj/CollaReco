@@ -11,7 +11,6 @@ export default function Transcript() {
   const [messages] = api.session.listMessages.useSuspenseQuery({
     sessionId: selectedSession ?? "",
   });
-  console.log(`message=`, messages);
   // const scrollRef = useRef<HTMLDivElement>(null);
 
   // useEffect(() => {

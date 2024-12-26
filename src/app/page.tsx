@@ -10,21 +10,14 @@ import { api } from "~/trpc/react";
 import ModalComponent from "~/app/_components/ModalComponent";
 import { useAtom } from "jotai";
 import {
-  clientSideApiKeyAtom,
   clientSideLLMCallEnabledAtom,
   errorAtom,
   recognitionAtom,
   recordingAtom,
-  selectedSessionAtom,
   serverSideExplicitPassThroughAtom,
 } from "~/utils/atoms";
-import { callLLMFromClient } from "~/utils/llm/llmFromClient";
-import SessionList from "~/app/_components/SessionList";
-import Transcript from "./_components/Transcript";
-import useSharedEditor, { getEditor } from "~/hooks/useSharedEditor";
 import Session from "./_components/Session";
 import useRecognition from "~/hooks/useRecognition";
-import SessionSelect from "./_components/SessionSelect";
 
 const App: React.FC = () => {
   const [recording, setRecording] = useAtom<boolean>(recordingAtom);
@@ -54,7 +47,6 @@ const App: React.FC = () => {
   //   recording.current = false;
   // }, []);
 
-  const [selectedSession, setSelectedSession] = useAtom(selectedSessionAtom);
   const [deviceList, selectedDevice, setSelectedDevice] = useRecognition();
 
   const dialogRef = useRef<HTMLDialogElement | null>(null);
@@ -69,12 +61,14 @@ const App: React.FC = () => {
         })
         .then(() => {
           recognition.start();
-          setRecording(true);
+          console.log(`1 -> true`);
+          // setRecording(true);
           setRecognizeCount((prevValue) => prevValue + 1);
         })
         .catch((err) => {
           console.error("マイクへのアクセスに失敗しました。", err);
-          setRecording(false);
+          console.log(`2 -> false`);
+          // setRecording(false);
         });
     }
   };
@@ -88,17 +82,14 @@ const App: React.FC = () => {
   const handleAbort = () => {
     if (recognition) {
       recognition.abort();
-      setRecording(false);
+      console.log(`3 -> false`);
+      // setRecording(false);
       setRecognizeCount((prevValue) => prevValue + 1);
     }
   };
 
   const handleDeviceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedDevice(event.target.value);
-  };
-
-  const handleSessionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedSession(event.target.value);
   };
 
   const handleLLMCallEnabledChange = (
@@ -129,7 +120,7 @@ const App: React.FC = () => {
             <span className="relative">
               <span
                 className="text-shadow absolute left-0.5 top-0.5 text-4xl font-bold italic text-white"
-                style={{ textShadow: "2px 2px 3px rgba(0, 0, 0, 0.1);" }}
+                style={{ textShadow: "2px 2px 3px rgba(0, 0, 0, 0.1)" }}
               >
                 CollaReco
               </span>
@@ -143,6 +134,7 @@ const App: React.FC = () => {
             </span>
           </div>
           {error && <p className="text-red-700">{error}</p>}
+          recording={JSON.stringify(recording)}
           <div className="rounded-lg bg-slate-300 p-2">
             <div>
               <span className="label">
@@ -228,12 +220,7 @@ const App: React.FC = () => {
           </div>
         </div>
       </header>
-      <SessionSelect
-        selectedSession={selectedSession}
-        onSessionChange={handleSessionChange}
-      />
-      sessionId={selectedSession}
-      {selectedSession && <Session sessionId={selectedSession} />}
+      <Session />
       {!serverSideApiKeyEnabled && <ModalComponent ref={dialogRef} />}
     </div>
   );

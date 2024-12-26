@@ -6,12 +6,12 @@ import React from "react";
 import { api } from "~/trpc/react";
 
 interface SessionSelectProps {
-  selectedSession?: string;
+  sessionId?: string;
   onSessionChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 const SessionSelect: React.FC<SessionSelectProps> = ({
-  selectedSession,
+  sessionId,
   onSessionChange,
 }) => {
   const [sessionList] = api.session.list.useSuspenseQuery();
@@ -20,7 +20,7 @@ const SessionSelect: React.FC<SessionSelectProps> = ({
     return <div>No sessions</div>;
   }
 
-  const defaultValue = selectedSession ?? sessionList[0]?.id;
+  const defaultValue = sessionId ?? sessionList[0]?.id;
 
   return (
     <label htmlFor="session-select" className="p-2">

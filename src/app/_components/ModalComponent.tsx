@@ -7,7 +7,6 @@ type Props = {
   ref: React.RefObject<HTMLDialogElement | null>;
 };
 const ModalComponent = ({ ref }: Props) => {
-  console.log(`object ModalComponent`);
   const [clientSideApiKey, setClientSideApiKey] = useAtom(clientSideApiKeyAtom);
   const [tmpApiKey, setTmpApiKey] = React.useState(clientSideApiKey);
   // const [showModal, setShowModal] = useAtom(showModalAtom);

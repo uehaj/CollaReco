@@ -10,7 +10,6 @@ type Props = {
 };
 
 const Tiptap = ({ sessionId }: Props) => {
-  console.log(`=========Tiptap(${sessionId})============`);
   const editor = useSharedEditor(sessionId ?? "");
   return (
     <EditorContent key="sessionId" id="sessionId" editor={editor ?? null} />
