@@ -21,9 +21,10 @@ import useRecognition from "~/hooks/useRecognition";
 import SessionSelect from "./SessionSelect";
 
 export default function Session() {
-  const [config] = api.post.config.useSuspenseQuery();
+  // const [config] = api.post.config.useSuspenseQuery();
+  const { data: config } = api.post.config.useQuery();
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const serverSideApiKeyEnabled = config.serverSideApiKeyEnabled;
+  const serverSideApiKeyEnabled = config?.serverSideApiKeyEnabled;
 
   // const recording = useRef<boolean>(false);
   // const [, setRecognizeCount] = useState<number>(0);
@@ -70,8 +71,9 @@ export default function Session() {
     useAtom(serverSideExplicitPassThroughAtom);
 
   const [selectedSession, setSelectedSession] = useAtom(selectedSessionAtom);
-  const [sessionList] = api.session.list.useSuspenseQuery();
-  const sessionId = selectedSession ?? sessionList[0]?.id;
+  //  const [sessionList] = api.session.list.useSuspenseQuery();
+  const { data: sessionList } = api.session.list.useQuery();
+  const sessionId = selectedSession ?? sessionList?.[0]?.id;
 
   if (sessionId === undefined) {
     return <div>セッションがありません</div>;

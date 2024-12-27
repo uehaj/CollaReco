@@ -31,10 +31,11 @@ export default function useRecognition(
   onFinalResult?: (text: string) => void,
   onIntrimResult?: (text: string) => void,
 ): [AudioDevice[], string, React.Dispatch<React.SetStateAction<string>>] {
-  const [config] = api.post.config.useSuspenseQuery();
+  // const [config] = api.post.config.useSuspenseQuery();
+  const { data: config } = api.post.config.useQuery();
 
   // const [, setError] = useAtom(errorAtom);
-  const serverSideApiKeyEnabled = config.serverSideApiKeyEnabled;
+  const serverSideApiKeyEnabled = config?.serverSideApiKeyEnabled;
   const [clientSideLLMCallEnabled] = useAtom(clientSideLLMCallEnabledAtom);
 
   const [deviceList, setDeviceList] = useState<AudioDevice[]>();

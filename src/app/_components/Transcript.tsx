@@ -5,7 +5,10 @@ import { useEffect, useRef } from "react";
 
 export default function Transcript() {
   const [selectedSession] = useAtom(selectedSessionAtom);
-  const [messages] = api.session.listMessages.useSuspenseQuery({
+  // const [messages] = api.session.listMessages.useSuspenseQuery({
+  //   sessionId: selectedSession ?? "",
+  // });
+  const { data: messages } = api.session.listMessages.useQuery({
     sessionId: selectedSession ?? "",
   });
   const scrollRef = useRef<HTMLDivElement>(null);

@@ -25,8 +25,10 @@ const App: React.FC = () => {
     clientSideLLMCallEnabledAtom,
   );
 
-  const [config] = api.post.config.useSuspenseQuery();
-  const serverSideApiKeyEnabled = config.serverSideApiKeyEnabled;
+  // const [config] = api.post.config.useSuspenseQuery();
+  const { data: config } = api.post.config.useQuery();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const serverSideApiKeyEnabled = config?.serverSideApiKeyEnabled;
 
   const [serverSideExplicitPassThrough, setServerSideExplicitPassThrough] =
     useAtom(serverSideExplicitPassThroughAtom);
