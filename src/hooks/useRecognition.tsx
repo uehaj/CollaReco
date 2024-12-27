@@ -13,13 +13,14 @@ import {
 import { callLLMFromClient } from "~/utils/llm/llmFromClient";
 
 const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
+  typeof window !== "undefined" &&
+  (window.SpeechRecognition || window.webkitSpeechRecognition);
 
-if (!SpeechRecognition) {
+if (!SpeechRecognition && typeof window !== "undefined") {
   alert("このブラウザは音声認識APIをサポートしていません。");
 }
 
-const rec = new SpeechRecognition();
+const rec = SpeechRecognition && new SpeechRecognition();
 
 interface AudioDevice {
   deviceId: string;
@@ -62,6 +63,9 @@ export default function useRecognition(
 
   useEffect(
     () => {
+      if (!rec) {
+        return;
+      }
       console.log(`useRecognition useEffect recording: ${recording}`);
 
       rec.lang = "ja-JP";
@@ -140,5 +144,6 @@ export default function useRecognition(
     [recording],
   );
 
-  return [deviceList, selectedDevice, setSelectedDevice];
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/non-nullable-type-assertion-style
+  return [deviceList as AudioDevice[], selectedDevice, setSelectedDevice];
 }
