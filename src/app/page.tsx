@@ -1,18 +1,12 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { api } from "~/trpc/react";
-import ModalComponent from "~/app/_components/ModalComponent";
+import React, { useState, Suspense } from "react";
 import { useAtom } from "jotai";
-import {
-  clientSideLLMCallEnabledAtom,
-  errorAtom,
-  recognitionAtom,
-  recordingAtom,
-  serverSideExplicitPassThroughAtom,
-} from "~/utils/atoms";
+import { errorAtom, recognitionAtom, recordingAtom } from "~/utils/atoms";
 import Session from "./_components/Session";
 import useRecognition from "~/hooks/useRecognition";
+import LLMControl from "./_components/LLMControl";
+import { SuspenseWithoutSsr } from "./_components/SuspenseWithoutSsr";
 
 const App: React.FC = () => {
   const [recording, setRecording] = useAtom<boolean>(recordingAtom);
@@ -21,21 +15,7 @@ const App: React.FC = () => {
 
   const [error] = useAtom(errorAtom);
 
-  const [clientSideLLMCallEnabled, setClientSideLLMCallEnabled] = useAtom(
-    clientSideLLMCallEnabledAtom,
-  );
-
-  // const [config] = api.post.config.useSuspenseQuery();
-  const { data: config } = api.post.config.useQuery();
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const serverSideApiKeyEnabled = config?.serverSideApiKeyEnabled;
-
-  const [serverSideExplicitPassThrough, setServerSideExplicitPassThrough] =
-    useAtom(serverSideExplicitPassThroughAtom);
-
   const [deviceList, selectedDevice, setSelectedDevice] = useRecognition();
-
-  const dialogRef = useRef<HTMLDialogElement | null>(null);
 
   const handleStart = () => {
     if (recognition) {
@@ -77,26 +57,6 @@ const App: React.FC = () => {
   const handleDeviceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedDevice(event.target.value);
   };
-
-  const handleLLMCallEnabledChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setClientSideLLMCallEnabled(event.target.checked);
-  };
-
-  const handleServerSideExplicitPassThroughChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setServerSideExplicitPassThrough(event.target.checked);
-  };
-
-  function handleShowDaialog() {
-    console.log(`dialogRef.current`, dialogRef.current);
-    if (dialogRef.current) {
-      console.log(`handleShowDaialog`);
-      dialogRef.current.showModal();
-    }
-  }
 
   return (
     <div className="prose prose-slate flex h-screen max-w-none flex-col">
@@ -167,46 +127,16 @@ const App: React.FC = () => {
               >
                 音声認識を区切る
               </button>
-
-              <>
-                {!serverSideApiKeyEnabled && (
-                  <span>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={clientSideLLMCallEnabled}
-                        onChange={handleLLMCallEnabledChange}
-                        disabled={recording}
-                      />
-                      クライアント側からのLLM呼び出し
-                    </label>
-                    {clientSideLLMCallEnabled && (
-                      <button onClick={handleShowDaialog} disabled={recording}>
-                        ✎ Set API Key
-                      </button>
-                    )}
-                  </span>
-                )}
-              </>
-              {serverSideApiKeyEnabled && (
-                <span>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={serverSideExplicitPassThrough}
-                      onChange={handleServerSideExplicitPassThroughChange}
-                      disabled={recording}
-                    />
-                    LLMパススルー
-                  </label>
-                </span>
-              )}
+              <Suspense fallback={<div>Loading...</div>}>
+                <LLMControl />
+              </Suspense>
             </div>
           </div>
         </div>
       </header>
-      <Session />
-      {!serverSideApiKeyEnabled && <ModalComponent ref={dialogRef} />}
+      <SuspenseWithoutSsr fallback={<div>Loading...</div>}>
+        <Session />
+      </SuspenseWithoutSsr>
     </div>
   );
 };
