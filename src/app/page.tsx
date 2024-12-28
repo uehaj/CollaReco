@@ -127,9 +127,9 @@ const App: React.FC = () => {
               >
                 音声認識を区切る
               </button>
-              <Suspense fallback={<div>Loading...</div>}>
+              <SuspenseWithoutSsr fallback={<div>Loading...</div>}>
                 <LLMControl />
-              </Suspense>
+              </SuspenseWithoutSsr>
             </div>
           </div>
         </div>
