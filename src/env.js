@@ -20,6 +20,9 @@ export const env = createEnv({
     AZURE_API_VERSION: z.string().optional(),
     AZURE_DEPLOYEMENT_NAME: z.string().optional(),
     AZURE_LLM_MODEL: z.string().optional(),
+
+    TURSO_DATABASE_URL: z.string().optional(),
+    TURSO_AUTH_TOKEN: z.string().optional(),
   },
 
   /**
@@ -49,6 +52,9 @@ export const env = createEnv({
     AZURE_LLM_MODEL: process.env.AZURE_LLM_MODEL,
 
     NEXT_PUBLIC_WEBSOCKET_URL: process.env.NEXT_PUBLIC_WEBSOCKET_URL,
+
+    TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL,
+    TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
