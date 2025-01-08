@@ -48,4 +48,7 @@ yarn-error.log*
 
 \#*
 nohup.out
+memo.md.go-tetris.log
+*.log
 memo.md
+prisma/*.db

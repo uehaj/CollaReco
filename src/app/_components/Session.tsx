@@ -21,8 +21,8 @@ import useRecognition from "~/hooks/useRecognition";
 import SessionSelect from "./SessionSelect";
 
 export default function Session() {
-  // const [config] = api.post.config.useSuspenseQuery();
-  const { data: config } = api.post.config.useQuery();
+  const [config] = api.post.config.useSuspenseQuery();
+  // const { data: config } = api.post.config.useQuery();
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const serverSideApiKeyEnabled = config?.serverSideApiKeyEnabled;
 
@@ -71,8 +71,8 @@ export default function Session() {
     useAtom(serverSideExplicitPassThroughAtom);
 
   const [selectedSession, setSelectedSession] = useAtom(selectedSessionAtom);
-  //  const [sessionList] = api.session.list.useSuspenseQuery();
-  const { data: sessionList } = api.session.list.useQuery();
+  const [sessionList] = api.session.list.useSuspenseQuery();
+  // const { data: sessionList } = api.session.list.useQuery();
   const sessionId = selectedSession ?? sessionList?.[0]?.id;
 
   if (sessionId === undefined) {
